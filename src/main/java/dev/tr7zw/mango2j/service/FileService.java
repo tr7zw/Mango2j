@@ -159,6 +159,16 @@ public class FileService {
         @NonNull
         private File dir;
 
+        @Override
+        public List<Entry> getFilesTyped(int id) {
+            List<Entry> entries = new ArrayList<>();
+            List<String> files = getInternalFiles();
+            for(int i = 0; i < files.size(); i++) {
+                entries.add(new Entry(i, files.get(i).toLowerCase().endsWith(".mp4") ? "VIDEO" : "IMG"));
+            }
+            return entries;
+        }
+        
         private List<String> getInternalFiles() {
             String[] fileList = dir.list();
             if (fileList != null) {
@@ -223,6 +233,16 @@ public class FileService {
         private List<String> extractList(ZipFile zipFile) {
             return zipFile.stream().filter(z -> !z.isDirectory()).map(ZipEntry::getName).filter(n -> !n.toLowerCase().equals("thumbs.db"))
                     .sorted(titleComp).toList();
+        }
+        
+        @Override
+        public List<Entry> getFilesTyped(int id) {
+            List<Entry> entries = new ArrayList<>();
+            List<String> files = getInternalFiles();
+            for(int i = 0; i < files.size(); i++) {
+                entries.add(new Entry(i, files.get(i).toLowerCase().endsWith(".mp4") ? "VIDEO" : "IMG"));
+            }
+            return entries;
         }
         
         @Override

@@ -4,9 +4,11 @@ import java.io.ByteArrayOutputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.List;
 
 public interface ChapterWrapper {
 
+    List<Entry> getFilesTyped(int id);
     int getFiles();
     InputStream getInputStream(int id) throws FileNotFoundException;
     boolean hasFile(int id);
@@ -19,4 +21,7 @@ public interface ChapterWrapper {
         return buffer.toByteArray();
     }
     
+    public record Entry(int id, String type) {
+    }
+
 }

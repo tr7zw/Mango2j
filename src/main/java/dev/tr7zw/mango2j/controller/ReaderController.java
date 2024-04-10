@@ -22,14 +22,14 @@ public class ReaderController {
     private final FileService fileService;
     private final TitleRepository titleRepo;
     private final ChapterRepository chapterRepo;
-    
+
     @Autowired
     public ReaderController(FileService fileService, TitleRepository titleRepo, ChapterRepository chapterRepo) {
         this.fileService = fileService;
         this.titleRepo = titleRepo;
         this.chapterRepo = chapterRepo;
     }
-    
+
     @GetMapping("/reader/{id}")
     public String home(@PathVariable Integer id, Model model) {
         // Add necessary attributes to the model
@@ -37,14 +37,14 @@ public class ReaderController {
         Chapter chapter = chapterRepo.getReferenceById(id);
         Title title = titleRepo.findByFullPath(chapter.getPath());
         ChapterWrapper chapterWrapper = fileService.getChapterWrapper(new File(chapter.getFullPath()).toPath());
-        model.addAttribute("items" , IntStream.range(0, chapterWrapper.getFiles()).boxed().toList());
-        model.addAttribute("titleid" , "123");
-        model.addAttribute("entryid" , id);
+        model.addAttribute("items", chapterWrapper.getFilesTyped(id));
+        model.addAttribute("titleid", "123");
+        model.addAttribute("entryid", id);
         model.addAttribute("page_idx", 0);
         model.addAttribute("base_url", "http://localhost:8080");
         model.addAttribute("exit_url", "/library/" + title.getId());
-        
+
         return "reader";
     }
-    
+
 }
