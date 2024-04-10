@@ -1,0 +1,69 @@
+<div class="uk-offcanvas-content">
+    <div class="uk-navbar-container uk-navbar-transparent" uk-navbar="uk-navbar">
+    <div id="mobile-nav" uk-offcanvas="overlay: true">
+        <div class="uk-offcanvas-bar uk-flex uk-flex-column">
+        <ul class="uk-nav-parent-icon uk-nav-primary uk-nav-center uk-margin-auto-vertical" uk-nav>
+            <li><a th:href="@{/}">Home</a></li>
+            <li><a th:href="@{/library}">Library</a></li>
+            <li><a th:href="@{/tags}">Tags</a></li>
+            <li th:if="${is_admin}">
+            <a th:href="@{/admin}">Admin</a>
+            <li class="uk-parent">
+                <a href="#">Download</a>
+                <ul class="uk-nav-sub">
+                <li><a th:href="@{/download/plugins}">Plugins</a></li>
+                <li><a th:href="@{/admin/downloads}">Download Manager</a></li>
+                <li><a th:href="@{/admin/subscriptions}">Subscription Manager</a></li>
+                </ul>
+            </li>
+            </li>
+            <hr uk-divider>
+            <li><a onclick="toggleTheme()"><i class="fas fa-adjust"></i></a></li>
+            <li><a th:href="@{/logout}">Logout</a></li>
+        </ul>
+        </div>
+    </div>
+    </div>
+</div>
+<div class="uk-position-top">
+    <div class="uk-navbar-container uk-navbar-transparent" uk-navbar="uk-navbar">
+    <div class="uk-navbar-left uk-hidden@m">
+        <div class="uk-navbar-toggle" uk-navbar-toggle-icon="uk-navbar-toggle-icon" uk-toggle="target: #mobile-nav"></div>
+    </div>
+    <div class="uk-navbar-left uk-visible@m">
+        <a class="uk-navbar-item uk-logo" th:href="@{/}"><img th:src="@{/img/icons/icon.png}" style="width:90px;height:90px;"></a>
+        <ul class="uk-navbar-nav">
+        <li><a th:href="@{/}">Home</a></li>
+        <li><a th:href="@{/library}">Library</a></li>
+        <li><a th:href="@{/tags}">Tags</a></li>
+        <li th:if="${is_admin}">
+            <li><a th:href="@{/admin}">Admin</a></li>
+            <li>
+            <a href="#">Download</a>
+            <div class="uk-navbar-dropdown">
+                <ul class="uk-nav uk-navbar-dropdown-nav">
+                <li class="uk-nav-header">Source</li>
+                <li><a th:href="@{/download/plugins}">Plugins</a></li>
+                <li class="uk-nav-divider"></li>
+                <li><a th:href="@{/admin/downloads}">Download Manager</a></li>
+                <li><a th:href="@{/admin/subscriptions}">Subscription Manager</a></li>
+                </ul>
+            </div>
+            </li>
+        </li>
+        </ul>
+    </div>
+    <div class="uk-navbar-right uk-visible@m">
+        <ul class="uk-navbar-nav">
+        <li><a onclick="toggleTheme()"><i class="fas fa-adjust"></i></a></li>
+        <!--<li><a th:href="@{/logout}">Logout</a></li>-->
+        </ul>
+    </div>
+    </div>
+</div>
+<div class="uk-section uk-section-small">
+</div>
+<script th:inline="javascript">
+    setTheme();
+</script>
+<div th:replace="~{uikit}"></div>

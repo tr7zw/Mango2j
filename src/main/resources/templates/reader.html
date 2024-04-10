@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html class="reader-bg" xmlns:th="http://www.thymeleaf.org">
+  <head>
+    <div th:with="page='Reader'"></div>
+    <th:block th:insert="~{head}"></th:block>
+  </head>
+
+  <body style="position:relative;"  x-init='init($nextTick)' @resize.window='resized()'> <!--x-data='readerComponent()'-->
+    <div class="uk-section uk-section-default uk-section-small reader-bg" th:style="${mode == 'continuous' ? '' : 'padding:0; position: relative;'}">
+
+      <div @keydown.window.debounce='keyHandler($event)'></div>
+
+      <!--<div class="uk-container uk-container-small">
+        <div id="alert"></div>
+        <div th:show="loading">
+          <div th:class="${alertClass}" th:show="msg" uk-alert>
+            <p th:text="${msg}"></p>
+          </div>
+        </div>
+      </div>-->
+
+      <div th:class="'uk-container' + (${mode == 'continuous'} ? ' uk-container-small' : ' uk-container-expand')" style="width: fit-content;">
+        <div th:show="${mode == 'continuous'}">
+          <div th:if="${mode == 'continuous'}" th:each="item : ${items}">
+            <img uk-img lass="uk-align-center" th:data-src="'/image/' + ${entryid} + '/' + ${item}" width="100%" height="500px" th:id="${items.indexOf(item)}" th:style="'margin-top:' + ${margin} + 'px; margin-bottom:' + ${margin} + 'px'" click="clickImage($event)" />
+          </div>
+          <a th:if="${next_entry_url}" id="next-btn" class="uk-align-center uk-button uk-button-primary" th:href="@{${next_entry_url}}" th:text="Next Entry"></a>
+          <a th:unless="${next_entry_url}" id="next-btn" class="uk-align-center uk-button uk-button-primary" th:href="@{${exit_url}}" th:text="'Exit Reader'"></a>
+        </div>
+
+        <!--<div th:cloak th:show="mode != 'continuous'" class="uk-flex uk-flex-middle" th:style="'height:' + ${fitType == 'vert' ? '100vh' : ''} + '; min-width: fit-content;'">
+
+          <img uk-img th:class="'uk-align-center' + (${flipAnimation == 'left'} ? ' uk-animation-slide-left' : ' uk-animation-slide-right')" th:data-src="${curItem.url}" th:width="${curItem.width}" th:height="${curItem.height}" th:id="${curItem.id}" click="clickImage($event)" th:style="'width:' + (fitType == 'horz' ? '100vw' : 'auto') + '; height:' + (fitType === 'vert' ? '100vh' : 'auto') + '; margin-bottom:0; max-width:' + (fitType === 'horz' ? '100%' : fitType === 'vert' ? '' : 'none') + '; max-height:' + (fitType === 'vert' ? '100%' : fitType === 'horz' ? '' : 'none') + '; object-fit: contain;'"/>
+
+          <div style="position:absolute;z-index:1; top:0;left:0; width:30%;height:100%;" click="flipPage(false ^ enableRightToLeft)"></div>
+          <div style="position:absolute;z-index:1; top:0;right:0; width:30%;height:100%;" click="flipPage(true ^ enableRightToLeft)"></div>
+        </div>-->
+
+      </div>
+    </div>
+
+    <div id="modal-sections" class="uk-flex-top" uk-modal>
+      <div class="uk-modal-dialog uk-margin-auto-vertical">
+        <button class="uk-modal-close-default" type="button" uk-close></button>
+        <div class="uk-modal-header">
+          <h3 class="uk-modal-title break-word" th:text="'${entry.display_name}'"></h3>
+          <p class="uk-text-meta uk-margin-remove-bottom break-word" th:text="'${entry.path}'"></p>
+        </div>
+        <div class="uk-modal-body">
+          <div class="uk-margin">
+            <p th:text="'Progress 0'"></p>
+            <!--<p th:text="'Progress: ' + ${selectedIndex} + '/' + ${items.length} + ' (' + (${selectedIndex}/${items.length} * 100).toFixed(1) + '%)'"></p>-->
+          </div>
+          <div class="uk-margin">
+            <label class="uk-form-label" for="page-select">Jump to Page</label>
+            <div class="uk-form-controls">
+              <!--<select id="page-select" class="uk-select" change="pageChanged()" th:model="${selectedIndex}">
+                <option th:each="p : ${#numbers.sequence(1, entry.pages)}" th:value="${p}" th:text="${p}"></option>
+              </select>-->
+            </div>
+          </div>
+
+          <div class="uk-margin">
+            <label class="uk-form-label" for="mode-select">Mode</label>
+            <div class="uk-form-controls">
+              <select id="mode-select" class="uk-select" change="modeChanged($nextTick)">
+                <option value="continuous">Continuous</option>
+                <option value="paged">Paged</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="uk-margin" th:show="${mode != 'continuous'}">
+            <label class="uk-form-label" for="mode-select">Page fit</label>
+            <div class="uk-form-controls">
+              <select id="fit-select" class="uk-select" change="fitChanged()">
+                <option value="vert">Fit height</option>
+                <option value="horz">Fit width</option>
+                <option value="real">Real size</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="uk-margin" th:show="${mode == 'continuous'}">
+            <label class="uk-form-label" for="margin-range" th:text="'Page Margin: ' + ${margin} + 'px'"></label>
+            <div class="uk-form-controls">
+              <input id="margin-range" class="uk-range" type="range" min="0" max="50" step="5" th:model="${margin}" change="marginChanged()">
+            </div>
+        </div>
+
+        <div class="uk-margin uk-form-horizontal" th:show="${mode != 'continuous'}">
+          <label class="uk-form-label" for="enable-flip-animation">Enable Flip Animation</label>
+          <div class="uk-form-controls">
+            <input id="enable-flip-animation" class="uk-checkbox" type="checkbox" th:model="${enableFlipAnimation}" change="enableFlipAnimationChanged()">
+          </div>
+        </div>
+        <div class="uk-margin uk-form-horizontal" th:show="${mode != 'continuous'}">
+          <label class="uk-form-label" for="preload-lookahead" th:text="'Preload Image: ' + ${preloadLookahead} + ' page(s)'"></label>
+          <div class="uk-form-controls">
+            <input id="preload-lookahead" class="uk-range" type="range" min="0" max="5" step="1" th:model.number="${preloadLookahead}" change="preloadLookaheadChanged()">
+          </div>
+        </div>
+
+        <!--<div class="uk-margin uk-form-horizontal" th:show="${mode != 'continuous'}">
+          <label class="uk-form-label" for="enable-right-to-left">Right to Left</label>
+          <div class="uk-form-controls">
+            <input id="enable-right-to-left" class="uk-checkbox" type="checkbox" th:model="${enableRightToLeft}" change="enableRightToLeftChanged()">
+          </div>
+        </div>-->
+        <hr class="uk-divider-icon">
+
+        <div class="uk-margin">
+          <label class="uk-form-label" for="entry-select">Jump to Entry</label>
+          <div class="uk-form-controls">
+            <select id="entry-select" class="uk-select" change="entryChanged()">
+              <option th:each="e : ${entries}" th:value="${e.id}" th:selected="${e.id == entry.id}" th:text="${e.title}"></option>
+            </select>
+          </div>
+        </div>
+      </div>
+      <div class="uk-modal-footer uk-text-right">
+        <a class="uk-button uk-button-default uk-margin-small-bottom uk-margin-small-right" th:if="${previous_entry_url}" th:href="@{${previous_entry_url}}">Previous Entry</a>
+        <a class="uk-button uk-button-default uk-margin-small-bottom uk-margin-small-right" th:if="${next_entry_url}" th:href="@{${next_entry_url}}">Next Entry</a>
+        <a class="uk-button uk-button-danger uk-margin-small-bottom uk-margin-small-right" th:href="@{${exit_url}}">Exit Reader</a>
+      </div>
+    </div>
+  </div>
+
+  <script th:inline="javascript">
+    const base_url = "";
+    const page = "${page_idx}";
+    const tid = "${titleid}";
+    const eid = "${entryid}";
+  </script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/protonet-jquery.inview/1.1.2/jquery.inview.min.js"></script>
+  <div th:replace="~{uikit}"></div>
+  <script th:src="@{'/js/alert.js'}"></script>
+  <script th:src="@{'/js/reader.js'}"></script>
+</body>
+
+<style>
+  img[data-src][src*='data:image'] { background: white; }
+  img:not(.spine) { width: 100%; }
+  .reader-bg { background: black; }
+</style>
+
+</html>
+

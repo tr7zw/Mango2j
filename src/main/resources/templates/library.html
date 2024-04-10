@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <!-- Include the layout's head content -->
+    <th:block th:insert="~{head}"></th:block>
+</head>
+<body>
+    <!-- Include the layout's body content -->
+    <th:block th:insert="~{layout}"></th:block>
+
+    <!-- Your library content here -->
+    <div class="uk-section uk-section-small" style="position:relative;">
+        <div class="uk-container uk-container-small">
+            <h2 class="uk-title" th:text="'Library - ' + (${name != null ? name : 'Home'})"></h2>
+            <p class="uk-text-meta" th:text="${titles.size + chapters.size} + ' titles found'"></p>
+            <div class="uk-grid-small" uk-grid>
+                <!--<div class="uk-margin-bottom uk-width-3-4@s">
+                    <form class="uk-search uk-search-default">
+                        <span uk-search-icon></span>
+                        <input class="uk-search-input" type="search" placeholder="Search">
+                    </form>
+                </div>-->
+                <div class="uk-margin-bottom uk-width-1-4@s">
+                    <!--<div th:insert="sort-form :: sort-form"></div>-->
+                </div>
+            </div>
+            <div class="uk-child-width-1-4@m uk-child-width-1-2" uk-grid>
+                <div th:each="item, i : ${titles}">
+                    <div>
+                        <a th:href="'/library/' + ${item.id}" th:text="${item.name}"></a>
+                    </div>
+                    <!--<div th:with="progress=${percentage[__${i}__]}">
+                        <div th:insert="card :: card"></div>
+                    </div>-->
+                </div>
+            </div>
+            <h3  th:if="${!chapters.empty}">Chapters</h3>
+            <div th:if="${!chapters.empty}" class="uk-child-width-1-4@m uk-child-width-1-2" uk-grid>
+                <div class="item" th:each="item, i : ${chapters}">
+                    <div class="uk-card uk-card-default">
+                        <div class="uk-card-media-top uk-inline">
+                            <img width="100%" height="100%" alt="" uk-img="" th:src="'/thumbnail/' + ${item.id}">
+                        </div>
+                        <div class="uk-card-body">
+                            <a class="uk-card-title break-word uk-margin-remove-top uk-text-meta uk-display-inline-block no-modal ddd-truncated" th:text="${item.name}" th:href="'/reader/' + ${item.id}"></a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Include additional scripts 
+    <th:block th:insert="layout :: additional-scripts"></th:block>-->
+</body>
+</html>
