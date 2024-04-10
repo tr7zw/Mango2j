@@ -27,7 +27,7 @@ import lombok.RequiredArgsConstructor;
 
 @Service
 public class FileService {
-
+    
     public ChapterWrapper getChapterWrapper(Path location) {
         if (location.toFile().isDirectory()) {
             return new FlatDirChapter(location.toFile());
@@ -102,20 +102,52 @@ public class FileService {
 
     private final Comparator<String> titleComp = new Comparator<String>() {
         public int compare(String o1, String o2) {
-            int a1 = extractInt(o1);
-            int a2 = extractInt(o2);
-            if (a1 == a2) {
-                return o1.compareTo(o2);
+            boolean hasAlphaPrefix1 = hasAlphaPrefix(o1);
+            boolean hasAlphaPrefix2 = hasAlphaPrefix(o2);
+
+            if (hasAlphaPrefix1 && hasAlphaPrefix2) {
+                return compareAlphaNumeric(o1, o2);
+            } else if (!hasAlphaPrefix1 && !hasAlphaPrefix2) {
+                return compareNumeric(o1, o2);
+            } else {
+                // One of the strings has an alphabetical prefix, the other does not.
+                // Strings with alphabetical prefixes come first.
+                return hasAlphaPrefix1 ? -1 : 1;
             }
-            return a1 - a2;
         }
 
-        int extractInt(String s) {
-            String num = s.replaceAll("\\D", "");
+        private boolean hasAlphaPrefix(String s) {
+            return s.matches("^[a-zA-Z]+.*");
+        }
+
+        private int compareAlphaNumeric(String o1, String o2) {
+            String[] parts1 = o1.split("_");
+            String[] parts2 = o2.split("_");
+
+            // Compare the alphabetical part first
+            int alphaCompare = parts1[0].compareTo(parts2[0]);
+            if (alphaCompare != 0) {
+                return alphaCompare;
+            }
+
+            // If the alphabetical part is the same, compare the numeric part
+            double num1 = extractDouble(parts1[1]);
+            double num2 = extractDouble(parts2[1]);
+            return Double.compare(num1, num2);
+        }
+
+        private int compareNumeric(String o1, String o2) {
+            double num1 = extractDouble(o1);
+            double num2 = extractDouble(o2);
+            return Double.compare(num1, num2);
+        }
+
+        private double extractDouble(String s) {
+            String num = s.replaceAll("[^\\d.]", "");
             // return 0 if no digits found
             try {
-                return num.isEmpty() ? 0 : Integer.parseInt(num);
-            } catch (Exception ex) {
+                return num.isEmpty() ? 0 : Double.parseDouble(num);
+            } catch (NumberFormatException ex) {
                 return 0;
             }
         }
@@ -127,32 +159,46 @@ public class FileService {
         @NonNull
         private File dir;
 
+        private List<String> getInternalFiles() {
+            String[] fileList = dir.list();
+            if (fileList != null) {
+                List<String> files = new ArrayList<>(Arrays.asList(fileList));
+                files.remove("Thumbs.db");
+                files.sort(titleComp);
+                return files;
+            } else {
+                return Collections.emptyList();
+            }
+        }
+        
         @Override
-        public List<String> getFiles() {
+        public int getFiles() {
             try {
-                String[] fileList = dir.list();
-                if (fileList != null) {
-                    List<String> files = new ArrayList<>(Arrays.asList(fileList));
-                    files.remove("Thumbs.db");
-                    files.sort(titleComp);
-                    return files;
-                } else {
-                    return Collections.emptyList();
-                }
+                return getInternalFiles().size();
             } catch (SecurityException e) {
                 e.printStackTrace();
-                return Collections.emptyList();
+                return -1;
             }
         }
 
         @Override
-        public InputStream getInputStream(String id) throws FileNotFoundException {
-            return new FileInputStream(new File(dir, id));
+        public InputStream getInputStream(int id) throws FileNotFoundException {
+            return new FileInputStream(new File(dir, getInternalFiles().get(id)));
         }
 
         @Override
-        public boolean hasFile(String id) {
-            return new File(dir, id).exists();
+        public boolean hasFile(int id) {
+            List<String> files = getInternalFiles();
+            if(id >= files.size()) {
+                return false;
+            }
+            return new File(dir, files.get(id)).exists();
+        }
+
+        @Override
+        public String getFileType(int id) {
+            List<String> files = getInternalFiles();
+            return files.get(id).split("\\.")[files.get(id).split("\\.").length-1].toLowerCase();
         }
 
     }
@@ -163,11 +209,9 @@ public class FileService {
         @NonNull
         private File file;
 
-        @Override
-        public List<String> getFiles() {
+        private List<String> getInternalFiles() {
             try (ZipFile zipFile = new ZipFile(file)) {
-                return zipFile.stream().map(ZipEntry::getName).filter(n -> !n.toLowerCase().equals("thumbs.db"))
-                        .sorted(titleComp).toList();
+                return extractList(zipFile);
             } catch (ZipException e) {
                 e.printStackTrace();
             } catch (IOException e) {
@@ -176,11 +220,22 @@ public class FileService {
             return Collections.emptyList();
         }
 
+        private List<String> extractList(ZipFile zipFile) {
+            return zipFile.stream().filter(z -> !z.isDirectory()).map(ZipEntry::getName).filter(n -> !n.toLowerCase().equals("thumbs.db"))
+                    .sorted(titleComp).toList();
+        }
+        
         @Override
-        public InputStream getInputStream(String id) throws FileNotFoundException {
+        public int getFiles() {
+            return getInternalFiles().size();
+        }
+
+        @Override
+        public InputStream getInputStream(int id) throws FileNotFoundException {
             try (ZipFile zipFile = new ZipFile(file)) {
+                List<String> list = extractList(zipFile);
                 ByteArrayOutputStream buffer = new ByteArrayOutputStream();
-                zipFile.getInputStream(zipFile.getEntry(id)).transferTo(buffer);
+                zipFile.getInputStream(zipFile.getEntry(list.get(id))).transferTo(buffer);
                 return new ByteArrayInputStream(buffer.toByteArray());
             } catch (ZipException e) {
                 e.printStackTrace();
@@ -191,15 +246,21 @@ public class FileService {
         }
 
         @Override
-        public boolean hasFile(String id) {
+        public boolean hasFile(int id) {
+            return getInternalFiles().size() >= id;
+        }
+
+        @Override
+        public String getFileType(int id) {
             try (ZipFile zipFile = new ZipFile(file)) {
-                return zipFile.getEntry(id) != null;
+                List<String> list = extractList(zipFile);
+                return list.get(id).split("\\.")[list.get(id).split("\\.").length-1].toLowerCase();
             } catch (ZipException e) {
                 e.printStackTrace();
             } catch (IOException e) {
                 e.printStackTrace();
             }
-            return false;
+            return null;
         }
 
     }

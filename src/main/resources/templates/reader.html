@@ -22,7 +22,7 @@
       <div th:class="'uk-container' + (${mode == 'continuous'} ? ' uk-container-small' : ' uk-container-expand')" style="width: fit-content;">
         <div th:show="${mode == 'continuous'}">
           <div th:if="${mode == 'continuous'}" th:each="item : ${items}">
-            <img uk-img lass="uk-align-center" th:data-src="'/image/' + ${entryid} + '/' + ${item}" width="100%" height="500px" th:id="${items.indexOf(item)}" th:style="'margin-top:' + ${margin} + 'px; margin-bottom:' + ${margin} + 'px'" click="clickImage($event)" />
+            <img uk-img lass="uk-align-center" th:data-src="'/image/' + ${entryid} + '/' + ${item}" width="100%" height="500px" th:id="${item}" th:style="'margin-top:' + ${margin} + 'px; margin-bottom:' + ${margin} + 'px'" click="clickImage($event)" />
           </div>
           <a th:if="${next_entry_url}" id="next-btn" class="uk-align-center uk-button uk-button-primary" th:href="@{${next_entry_url}}" th:text="Next Entry"></a>
           <a th:unless="${next_entry_url}" id="next-btn" class="uk-align-center uk-button uk-button-primary" th:href="@{${exit_url}}" th:text="'Exit Reader'"></a>

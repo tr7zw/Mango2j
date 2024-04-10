@@ -38,7 +38,6 @@ public class ThumbnailGenerator implements DisposableBean {
     private boolean cancel = false;
 
     @Async
-    //@Scheduled(fixedDelay = 3600000) // Run once per hour
     public void executeLongRunningTask() {
         if (lock.tryLock()) {
             try {
@@ -65,10 +64,14 @@ public class ThumbnailGenerator implements DisposableBean {
                 return;
             try {
                 ChapterWrapper chapterWrapper = fileService.getChapterWrapper(new File(chapter.getFullPath()).toPath());
-                String id = chapterWrapper.getFiles().get(0);
+                int id = 0;
+                if(!chapterWrapper.hasFile(id)) {
+                    log.info("No images in file " + chapter.getFullPath());
+                    continue;
+                }
                 BufferedImage image = ImageIO.read(chapterWrapper.getInputStream(id));
                 if (image == null) {
-                    log.info("Got null for image " + id + " in file " + chapter.getFullPath());
+                    log.info("Got null for image " + id + "(" + chapterWrapper.getFileType(id) + ") in file " + chapter.getFullPath());
                     continue;
                 }
                 BufferedImage thumbnail = Thumbnails.of(image).height(300).asBufferedImage();

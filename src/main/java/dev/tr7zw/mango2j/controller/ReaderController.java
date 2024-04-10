@@ -1,6 +1,8 @@
 package dev.tr7zw.mango2j.controller;
 
 import java.io.File;
+import java.util.stream.IntStream;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -35,7 +37,7 @@ public class ReaderController {
         Chapter chapter = chapterRepo.getReferenceById(id);
         Title title = titleRepo.findByFullPath(chapter.getPath());
         ChapterWrapper chapterWrapper = fileService.getChapterWrapper(new File(chapter.getFullPath()).toPath());
-        model.addAttribute("items" , chapterWrapper.getFiles());
+        model.addAttribute("items" , IntStream.range(0, chapterWrapper.getFiles()).boxed().toList());
         model.addAttribute("titleid" , "123");
         model.addAttribute("entryid" , id);
         model.addAttribute("page_idx", 0);

@@ -31,7 +31,7 @@ public class FileController {
     }
     
     @GetMapping("/image/{chapter}/{id}")
-    public ResponseEntity<ByteArrayResource> getImage(@PathVariable Integer chapter, @PathVariable String id) throws IOException {
+    public ResponseEntity<ByteArrayResource> getImage(@PathVariable Integer chapter, @PathVariable Integer id) throws IOException {
         Chapter ch = chapterRepo.getReferenceById(chapter);
         ChapterWrapper chapterWrapper = fileService.getChapterWrapper(new File(ch.getFullPath()).toPath());
         // Load your image file into a byte array
@@ -64,7 +64,7 @@ public class FileController {
 
         // Set the headers
         HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(getMediaType(id.split("\\.")[id.split("\\.").length-1].toLowerCase()));
+        headers.setContentType(getMediaType(chapterWrapper.getFileType(id)));
         headers.setContentLength(imageBytes.length);
 
         // Return ResponseEntity with the image bytes and headers
