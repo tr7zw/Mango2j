@@ -19,6 +19,7 @@ import dev.tr7zw.mango2j.db.Chapter;
 import dev.tr7zw.mango2j.db.ChapterRepository;
 import dev.tr7zw.mango2j.service.ChapterWrapper;
 import dev.tr7zw.mango2j.service.FileService;
+import dev.tr7zw.mango2j.util.JxlUtil;
 import dev.tr7zw.mango2j.util.WebpUtil;
 import lombok.Getter;
 import lombok.extern.java.Log;
@@ -65,13 +66,19 @@ public class ThumbnailGenerator implements DisposableBean {
             try {
                 ChapterWrapper chapterWrapper = fileService.getChapterWrapper(new File(chapter.getFullPath()).toPath());
                 int id = 0;
-                if(!chapterWrapper.hasFile(id)) {
+                if (!chapterWrapper.hasFile(id)) {
                     log.info("No images in file " + chapter.getFullPath());
                     continue;
                 }
-                BufferedImage image = ImageIO.read(chapterWrapper.getInputStream(id));
+                BufferedImage image = null;
+                if ("jxl".equals(chapterWrapper.getFileType(id))) {
+                    image = ImageIO.read(JxlUtil.jxlToPng(chapterWrapper.getInputStream(id)));
+                } else {
+                    image = ImageIO.read(chapterWrapper.getInputStream(id));
+                }
                 if (image == null) {
-                    log.info("Got null for image " + id + "(" + chapterWrapper.getFileType(id) + ") in file " + chapter.getFullPath());
+                    log.info("Got null for image " + id + "(" + chapterWrapper.getFileType(id) + ") in file "
+                            + chapter.getFullPath());
                     continue;
                 }
                 BufferedImage thumbnail = Thumbnails.of(image).height(300).asBufferedImage();
