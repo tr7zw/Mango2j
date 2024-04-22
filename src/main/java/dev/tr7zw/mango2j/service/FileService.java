@@ -22,6 +22,7 @@ import java.util.zip.ZipFile;
 
 import org.springframework.stereotype.Service;
 
+import dev.tr7zw.mango2j.util.ImageNameSorterUtil;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 
@@ -100,59 +101,6 @@ public class FileService {
 
     }
 
-    private final Comparator<String> titleComp = new Comparator<String>() {
-        public int compare(String o1, String o2) {
-            boolean hasAlphaPrefix1 = hasAlphaPrefix(o1);
-            boolean hasAlphaPrefix2 = hasAlphaPrefix(o2);
-
-            if (hasAlphaPrefix1 && hasAlphaPrefix2) {
-                return compareAlphaNumeric(o1, o2);
-            } else if (!hasAlphaPrefix1 && !hasAlphaPrefix2) {
-                return compareNumeric(o1, o2);
-            } else {
-                // One of the strings has an alphabetical prefix, the other does not.
-                // Strings with alphabetical prefixes come first.
-                return hasAlphaPrefix1 ? -1 : 1;
-            }
-        }
-
-        private boolean hasAlphaPrefix(String s) {
-            return s.matches("^[a-zA-Z]+.*");
-        }
-
-        private int compareAlphaNumeric(String o1, String o2) {
-            String[] parts1 = o1.split("_");
-            String[] parts2 = o2.split("_");
-
-            // Compare the alphabetical part first
-            int alphaCompare = parts1[0].compareTo(parts2[0]);
-            if (alphaCompare != 0) {
-                return alphaCompare;
-            }
-
-            // If the alphabetical part is the same, compare the numeric part
-            double num1 = extractDouble(parts1[1]);
-            double num2 = extractDouble(parts2[1]);
-            return Double.compare(num1, num2);
-        }
-
-        private int compareNumeric(String o1, String o2) {
-            double num1 = extractDouble(o1);
-            double num2 = extractDouble(o2);
-            return Double.compare(num1, num2);
-        }
-
-        private double extractDouble(String s) {
-            String num = s.replaceAll("[^\\d.]", "");
-            // return 0 if no digits found
-            try {
-                return num.isEmpty() ? 0 : Double.parseDouble(num);
-            } catch (NumberFormatException ex) {
-                return 0;
-            }
-        }
-    };
-
     @RequiredArgsConstructor
     private class FlatDirChapter implements ChapterWrapper {
 
@@ -174,7 +122,7 @@ public class FileService {
             if (fileList != null) {
                 List<String> files = new ArrayList<>(Arrays.asList(fileList));
                 files.remove("Thumbs.db");
-                files.sort(titleComp);
+                files.sort(ImageNameSorterUtil.COMPARATOR);
                 return files;
             } else {
                 return Collections.emptyList();
@@ -232,7 +180,7 @@ public class FileService {
 
         private List<String> extractList(ZipFile zipFile) {
             return zipFile.stream().filter(z -> !z.isDirectory()).map(ZipEntry::getName).filter(n -> !n.toLowerCase().equals("thumbs.db"))
-                    .sorted(titleComp).toList();
+                    .sorted(ImageNameSorterUtil.COMPARATOR).toList();
         }
         
         @Override
