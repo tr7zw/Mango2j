@@ -1,7 +1,10 @@
 package dev.tr7zw.mango2j.controller;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -33,6 +36,7 @@ public class LibraryController {
         titles.sort((a, b) -> a.getName().compareToIgnoreCase(b.getName()));
         model.addAttribute("titles", titles);
         model.addAttribute("chapters", new ArrayList<>());
+        model.addAttribute("chapterThumbnails", generateThumbnails(titles));
 
         // Return the name of the Thymeleaf template without the extension
         return "library";
@@ -50,9 +54,30 @@ public class LibraryController {
         chapters.sort((a, b) -> Integer.compare(b.getId(), a.getId())); // newest to oldest
         model.addAttribute("chapters", chapters);
         model.addAttribute("name", title.getName());
-
+        model.addAttribute("chapterThumbnails", generateThumbnails(titles));
         // Return the name of the Thymeleaf template without the extension
         return "library";
+    }
+
+    private Map<Title, Integer> generateThumbnails(List<Title> titles) {
+        Map<Title, Integer> map = new HashMap<>();
+        titles.forEach(t -> map.put(t, findThumbnail(t)));
+        return map;
+    }
+
+    private Integer findThumbnail(Title title) {
+        Optional<Chapter> chapter = chapterRepo.findByPath(title.getFullPath()).stream()
+                .filter(c -> c.getThumbnail() != null).findAny();
+        if (chapter.isPresent()) {
+            return chapter.get().getId();
+        }
+        for (Title other : titleRepo.findByPath(title.getFullPath())) {
+            Integer id = findThumbnail(other);
+            if (id != null) {
+                return id;
+            }
+        }
+        return null;
     }
 
 }
