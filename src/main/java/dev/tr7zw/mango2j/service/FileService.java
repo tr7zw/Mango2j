@@ -14,6 +14,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
@@ -28,6 +29,8 @@ import lombok.RequiredArgsConstructor;
 
 @Service
 public class FileService {
+    
+    private final Set<String> videoTypes = Set.of(".mp4", ".mov", ".wmv");
     
     public ChapterWrapper getChapterWrapper(Path location) {
         if (location.toFile().isDirectory()) {
@@ -112,7 +115,7 @@ public class FileService {
             List<Entry> entries = new ArrayList<>();
             List<String> files = getInternalFiles();
             for(int i = 0; i < files.size(); i++) {
-                entries.add(new Entry(i, files.get(i).toLowerCase().endsWith(".mp4") ? "VIDEO" : "IMG"));
+                entries.add(new Entry(i, videoTypes.contains(files.get(i).toLowerCase().substring(files.get(i).lastIndexOf('.'))) ? "VIDEO" : "IMG"));
             }
             return entries;
         }
@@ -188,7 +191,7 @@ public class FileService {
             List<Entry> entries = new ArrayList<>();
             List<String> files = getInternalFiles();
             for(int i = 0; i < files.size(); i++) {
-                entries.add(new Entry(i, files.get(i).toLowerCase().endsWith(".mp4") ? "VIDEO" : "IMG"));
+                entries.add(new Entry(i, videoTypes.contains(files.get(i).toLowerCase().substring(files.get(i).lastIndexOf('.'))) ? "VIDEO" : "IMG"));
             }
             return entries;
         }
