@@ -28,6 +28,20 @@ public class LibraryController {
     @Autowired
     private Settings settings;
 
+    @GetMapping("/")
+    public String index(Model model) {
+        // Add necessary attributes to the model
+        model.addAttribute("is_admin", true); // Example attribute, replace with your logic
+        List<Chapter> chapters = chapterRepo.findTop100ByOrderByIdDesc();
+        chapters.sort((a, b) -> Integer.compare(b.getId(), a.getId())); // newest to oldest
+        model.addAttribute("chapters", chapters);
+        model.addAttribute("titles", new ArrayList<>());
+        model.addAttribute("name", "Latest");
+        //model.addAttribute("chapterThumbnails", generateThumbnails(titles));
+        // Return the name of the Thymeleaf template without the extension
+        return "library";
+    }
+    
     @GetMapping("/library")
     public String home(Model model) {
         // Add necessary attributes to the model
