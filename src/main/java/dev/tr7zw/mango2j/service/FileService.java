@@ -92,7 +92,7 @@ public class FileService {
                 }
                 if (f.isDirectory() && !hasSubDirs(p)) {
                     try (Stream<Path> subFileStream = Files.list(f.toPath())) {
-                        return subFileStream.noneMatch(this::isChapter);
+                        return subFileStream.noneMatch(this::isChapter) && !new FlatDirChapter(f).getInternalFiles().isEmpty();
                     }
                 }
                 return false;
@@ -125,6 +125,8 @@ public class FileService {
             if (fileList != null) {
                 List<String> files = new ArrayList<>(Arrays.asList(fileList));
                 files.remove("Thumbs.db");
+                files.remove("info.json");
+                files.removeIf(s -> s.toLowerCase().endsWith(".zip") || s.toLowerCase().endsWith(".cbz"));
                 files.sort(ImageNameSorterUtil.COMPARATOR);
                 return files;
             } else {

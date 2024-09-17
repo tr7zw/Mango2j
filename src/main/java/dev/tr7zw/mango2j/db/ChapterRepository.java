@@ -11,5 +11,6 @@ public interface ChapterRepository extends JpaRepository<Chapter, Integer> {
     boolean existsByFullPath(String fullPath);
     List<Chapter> findByThumbnailIsNull();
     List<Chapter> findTop100ByOrderByIdDesc();
+    List<Chapter> findByPageCountIsNotNullOrderByPageCountAsc();
     
 }

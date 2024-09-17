@@ -36,6 +36,8 @@ public class FileScanner implements DisposableBean {
     private FileService fileService;
     @Autowired
     private ThumbnailGenerator thumbnailGenerator;
+    @Autowired
+    private ImageCounter imageCounter;
     private final Lock lock = new ReentrantLock();
     @Getter
     private boolean isRunning = false;
@@ -74,8 +76,10 @@ public class FileScanner implements DisposableBean {
         } else {
             log.info("File Scanner task is already locked.");
         }
-        if (triggered)
+        if (triggered) {
             thumbnailGenerator.executeLongRunningTask();
+            imageCounter.executeLongRunningTask();
+        }
     }
 
     private void deleteRemovedTitles() {
@@ -129,7 +133,7 @@ public class FileScanner implements DisposableBean {
             if (cancel)
                 return;
             File f = new File(dbChapter.getFullPath());
-            if (!f.exists()) {
+            if (!f.exists() || (dbChapter.getPageCount() != null && dbChapter.getPageCount() == 0)) {
                 chapterRepo.delete(dbChapter);
                 log.info("Deleted " + f);
             }

@@ -43,6 +43,7 @@ public class ReaderController {
         model.addAttribute("page_idx", 0);
         model.addAttribute("base_url", "http://localhost:8080");
         model.addAttribute("exit_url", "/library/" + title.getId());
+        model.addAttribute("delete_url", "/admin/delete/" + chapter.getId());
 
         return "reader";
     }

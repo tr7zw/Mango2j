@@ -73,6 +73,19 @@ public class LibraryController {
         return "library";
     }
 
+    @GetMapping("/empty")
+    public String empty(Model model) {
+        // Add necessary attributes to the model
+        model.addAttribute("is_admin", true); // Example attribute, replace with your logic
+        List<Chapter> chapters = chapterRepo.findByPageCountIsNotNullOrderByPageCountAsc();
+        model.addAttribute("chapters", chapters);
+        model.addAttribute("titles", new ArrayList<>());
+        model.addAttribute("name", "Empty");
+        //model.addAttribute("chapterThumbnails", generateThumbnails(titles));
+        // Return the name of the Thymeleaf template without the extension
+        return "empty";
+    }
+    
     private Map<Title, Integer> generateThumbnails(List<Title> titles) {
         Map<Title, Integer> map = new HashMap<>();
         titles.forEach(t -> map.put(t, findThumbnail(t)));

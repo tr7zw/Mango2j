@@ -39,4 +39,8 @@ public class Chapter {
     @Column(length = 100_000)
     private byte[] thumbnail;
     
+    @Getter
+    @Setter
+    private Integer pageCount;
+    
 }
