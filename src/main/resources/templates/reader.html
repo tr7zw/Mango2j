@@ -29,6 +29,7 @@
           </div>
           <a th:if="${next_entry_url}" id="next-btn" class="uk-align-center uk-button uk-button-primary" th:href="@{${next_entry_url}}" th:text="Next Entry"></a>
           <a th:unless="${next_entry_url}" id="next-btn" class="uk-align-center uk-button uk-button-primary" th:href="@{${exit_url}}" th:text="'Exit Reader'"></a>
+          <a th:unless="${next_entry_url}" id="next-btn" class="uk-align-center uk-button uk-button-primary" th:href="@{${delete_url}}" th:text="'Delete Entry'"></a>
         </div>
 
         <!--<div th:cloak th:show="mode != 'continuous'" class="uk-flex uk-flex-middle" th:style="'height:' + ${fitType == 'vert' ? '100vh' : ''} + '; min-width: fit-content;'">
@@ -125,6 +126,7 @@
         <a class="uk-button uk-button-default uk-margin-small-bottom uk-margin-small-right" th:if="${previous_entry_url}" th:href="@{${previous_entry_url}}">Previous Entry</a>
         <a class="uk-button uk-button-default uk-margin-small-bottom uk-margin-small-right" th:if="${next_entry_url}" th:href="@{${next_entry_url}}">Next Entry</a>
         <a class="uk-button uk-button-danger uk-margin-small-bottom uk-margin-small-right" th:href="@{${exit_url}}">Exit Reader</a>
+        <a class="uk-button uk-button-danger uk-margin-small-bottom uk-margin-small-right" th:href="@{${delete_url}}">Delete Entry</a>
       </div>
     </div>
   </div>
