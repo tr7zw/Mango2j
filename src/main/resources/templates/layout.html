@@ -6,7 +6,7 @@
             <li><a th:href="@{/}">Home</a></li>
             <li><a th:href="@{/library}">Library</a></li>
             <li><a th:href="@{/tags}">Tags</a></li>
-            <li th:if="${is_admin}">
+            <!--<li th:if="${is_admin}">
             <a th:href="@{/admin}">Admin</a>
             <li class="uk-parent">
                 <a href="#">Download</a>
@@ -16,10 +16,10 @@
                 <li><a th:href="@{/admin/subscriptions}">Subscription Manager</a></li>
                 </ul>
             </li>
-            </li>
+            </li>-->
             <hr uk-divider>
             <li><a onclick="toggleTheme()"><i class="fas fa-adjust"></i></a></li>
-            <li><a th:href="@{/logout}">Logout</a></li>
+            <!--<li><a th:href="@{/logout}">Logout</a></li>-->
         </ul>
         </div>
     </div>
@@ -35,7 +35,7 @@
         <ul class="uk-navbar-nav">
         <li><a th:href="@{/}">Home</a></li>
         <li><a th:href="@{/library}">Library</a></li>
-        <li><a th:href="@{/tags}">Tags</a></li>
+        <!--<li><a th:href="@{/tags}">Tags</a></li>
         <li th:if="${is_admin}">
             <li><a th:href="@{/admin}">Admin</a></li>
             <li>
@@ -50,7 +50,7 @@
                 </ul>
             </div>
             </li>
-        </li>
+        </li>-->
         </ul>
     </div>
     <div class="uk-navbar-right uk-visible@m">
