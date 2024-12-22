@@ -23,11 +23,13 @@ public class Chapter {
 
     @NonNull
     @Getter
+    @Setter
     @Column(unique = true, length = 1024)
     private String fullPath;
     
     @NonNull
     @Getter
+    @Setter
     private String path;
     
     @NonNull
