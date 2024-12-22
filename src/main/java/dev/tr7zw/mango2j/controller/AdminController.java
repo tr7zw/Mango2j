@@ -2,6 +2,7 @@ package dev.tr7zw.mango2j.controller;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -16,6 +17,7 @@ import dev.tr7zw.mango2j.db.Title;
 import dev.tr7zw.mango2j.db.TitleRepository;
 import dev.tr7zw.mango2j.jobs.FileScanner;
 import dev.tr7zw.mango2j.jobs.ThumbnailGenerator;
+import dev.tr7zw.mango2j.service.MoveTargetService;
 import lombok.extern.java.Log;
 
 @Controller
@@ -30,6 +32,8 @@ public class AdminController {
     private TitleRepository titleRepo;
     @Autowired
     private ChapterRepository chapterRepo;
+    @Autowired
+    private MoveTargetService moveTargetService;
     
     @GetMapping("/admin/generateThumbnails")
     public ResponseEntity<String> generateThumbnails() throws IOException {
@@ -58,6 +62,22 @@ public class AdminController {
         f.delete();
         log.info("Deleting " + f.getAbsolutePath());
         chapterRepo.delete(chapter);
+        return "redirect:/library/" + title.getId();
+    }
+    
+    @GetMapping("/admin/move/{chapterId}/{targetId}")
+    public String moveChapter(@PathVariable Integer chapterId, @PathVariable Integer targetId) throws IOException {
+        // move logic
+        File targetFolder = moveTargetService.getMoveTargets().get(targetId);
+        Chapter chapter = chapterRepo.getReferenceById(chapterId);
+        Title title = titleRepo.findByFullPath(chapter.getPath());
+        File f = new File(chapter.getFullPath());
+        File targetFile = new File(targetFolder, f.getName());
+        log.info("Moving " + f.getAbsolutePath() + " to " + targetFile.getAbsolutePath());
+        Files.move(f.toPath(), targetFile.toPath());
+        chapter.setFullPath(targetFile.getAbsolutePath());
+        chapter.setPath(targetFile.getParent().toString());
+        chapterRepo.save(chapter);
         return "redirect:/library/" + title.getId();
     }
     

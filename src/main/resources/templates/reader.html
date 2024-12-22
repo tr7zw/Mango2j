@@ -21,16 +21,29 @@
 
       <div th:class="'uk-container' + (${mode == 'continuous'} ? ' uk-container-small' : ' uk-container-expand')" style="width: fit-content;">
         <div th:show="${mode == 'continuous'}">
-          <div th:if="${mode == 'continuous'}" th:each="item : ${items}">
-            <img th:if="${item.type == 'IMG'}" uk-img lass="uk-align-center" th:data-src="'/image/' + ${entryid} + '/' + ${item.id}" width="100%" height="500px" th:id="${item.id}" th:style="'margin-top:' + ${margin} + 'px; margin-bottom:' + ${margin} + 'px'" click="clickImage($event)" />
-            <video th:if="${item.type == 'VIDEO'}" uk-img lass="uk-align-center" width="100%" height="500px" th:id="${item.id}" th:style="'margin-top:' + ${margin} + 'px; margin-bottom:' + ${margin} + 'px'" click="clickImage($event)" controls >
-              <source th:src="'/image/' + ${entryid} + '/' + ${item.id}" type="video/mp4">
-            </video>
-          </div>
-          <a th:if="${next_entry_url}" id="next-btn" class="uk-align-center uk-button uk-button-primary" th:href="@{${next_entry_url}}" th:text="Next Entry"></a>
-          <a th:unless="${next_entry_url}" id="next-btn" class="uk-align-center uk-button uk-button-primary" th:href="@{${exit_url}}" th:text="'Exit Reader'"></a>
-          <a th:unless="${next_entry_url}" id="next-btn" class="uk-align-center uk-button uk-button-primary" th:href="@{${delete_url}}" th:text="'Delete Entry'"></a>
-        </div>
+            <div th:if="${mode == 'continuous'}" th:each="item : ${items}">
+                <img th:if="${item.type == 'IMG'}" uk-img class="uk-align-center" th:data-src="'/image/' + ${entryid} + '/' + ${item.id}" width="100%" height="500px" th:id="${item.id}" th:style="'margin-top:' + ${margin} + 'px; margin-bottom:' + ${margin} + 'px'" click="clickImage($event)" />
+                <video th:if="${item.type == 'VIDEO'}" uk-img class="uk-align-center" width="100%" height="500px" th:id="${item.id}" th:style="'margin-top:' + ${margin} + 'px; margin-bottom:' + ${margin} + 'px'" click="clickImage($event)" controls>
+                    <source th:src="'/image/' + ${entryid} + '/' + ${item.id}" type="video/mp4">
+                </video>
+            </div>
+            <a th:if="${next_entry_url}" id="next-btn" class="uk-align-center uk-button uk-button-primary" th:href="@{${next_entry_url}}" th:text="Next Entry"></a>
+            <a th:unless="${next_entry_url}" id="next-btn" class="uk-align-center uk-button uk-button-primary" th:href="@{${exit_url}}" th:text="'Exit Reader'"></a>
+            <a th:unless="${next_entry_url}" id="delete-btn" class="uk-align-center uk-button uk-button-primary" th:href="@{${delete_url}}" th:text="'Delete Entry'"></a>
+            
+            <!-- Dropdown Button -->
+            <div class="uk-align-center">
+                <button class="uk-button uk-button-default" type="button" uk-toggle="target: #dropdown-options">
+                    Move to Folder
+                </button>
+                <div id="dropdown-options" class="uk-dropdown" uk-dropdown="mode: click">
+                    <ul class="uk-nav uk-dropdown-nav">
+                      <div th:if="${mode == 'continuous'}" th:each="target : ${moveTargets}">
+                        <li><a href="#" th:href="@{${target.url}}" th:text="@{${target.name}}"></a></li>
+                      </div>
+                    </ul>
+                </div>
+            </div>
 
         <!--<div th:cloak th:show="mode != 'continuous'" class="uk-flex uk-flex-middle" th:style="'height:' + ${fitType == 'vert' ? '100vh' : ''} + '; min-width: fit-content;'">
 
