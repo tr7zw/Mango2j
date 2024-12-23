@@ -75,8 +75,8 @@ public class AdminController {
         File targetFile = new File(targetFolder, f.getName());
         log.info("Moving " + f.getAbsolutePath() + " to " + targetFile.getAbsolutePath());
         Files.move(f.toPath(), targetFile.toPath());
-        chapter.setFullPath(targetFile.getAbsolutePath());
-        chapter.setPath(targetFile.getParent().toString());
+        chapter.setFullPath(targetFile.toPath().toString());
+        chapter.setPath(targetFile.toPath().getParent().toString());
         chapterRepo.save(chapter);
         return "redirect:/library/" + title.getId();
     }
