@@ -45,5 +45,14 @@ public class SortingTest {
         copy.sort(ImageNameSorterUtil.COMPARATOR);
         assertEquals(list, copy);
     }
+    
+    @Test
+    public void testWithSubdir() {
+        List<String> list = Arrays.asList("Sub Directory/7.png", "Sub Directory/22.png", "Sub Directory/105.png");
+        List<String> copy = new ArrayList<String>(list);
+        copy.sort(ImageNameSorterUtil.COMPARATOR);
+        assertEquals(list, copy);
+    }
+
 
 }
