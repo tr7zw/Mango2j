@@ -9,7 +9,17 @@ import java.util.regex.Pattern;
 public class ImageNameSorterUtil {
 
     public static final Comparator<String> COMPARATOR = new Comparator<String>() {
-        public int compare(String o1, String o2) {
+        public int compare(final String o1, final String o2) {
+            if (o1.contains("/") && o2.contains("/")) {
+                // We are in a zip with sub directories, first compare the parent dirs, 
+                // then compare the name when it is the same
+                int parentDir = COMPARATOR.compare(o1.substring(0, o1.lastIndexOf('/')),
+                        o2.substring(0, o2.lastIndexOf('/')));
+                if (parentDir != 0) {
+                    return parentDir;
+                }
+                return compare(o1.substring(o1.lastIndexOf('/') + 1), o2.substring(o2.lastIndexOf('/') + 1));
+            }
             boolean hasAlphaPrefix1 = hasAlphaPrefix(o1);
             boolean hasAlphaPrefix2 = hasAlphaPrefix(o2);
 
@@ -103,5 +113,5 @@ public class ImageNameSorterUtil {
         // If one list is longer, the shorter one is considered "less" since it has fewer numbers
         return Integer.compare(size1, size2);
     }
-    
+
 }
