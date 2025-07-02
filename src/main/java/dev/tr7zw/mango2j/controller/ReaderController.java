@@ -42,7 +42,6 @@ public class ReaderController {
         model.addAttribute("mode", "continuous");
         Chapter chapter = chapterRepo.getReferenceById(id);
         chapter.setViews((chapter.getViews() == null ? 0 : chapter.getViews()) + 1);
-        System.out.println(chapter.getViews() + " " + chapter.getLastView());
         chapter.setLastView(Instant.now());
         chapterRepo.save(chapter);
         Title title = titleRepo.findByFullPath(chapter.getPath());

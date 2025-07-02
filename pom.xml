@@ -18,6 +18,11 @@
 		<java.version>21</java.version>
 	</properties>
 	<dependencies>
+		<dependency>
+			<groupId>io.github.ollama4j</groupId>
+			<artifactId>ollama4j</artifactId>
+			<version>1.0.100</version>
+		</dependency>
 		<!-- https://mvnrepository.com/artifact/org.sejda.imageio/webp-imageio -->
 		<dependency>
 			<groupId>com.github.usefulness</groupId>
