@@ -12,5 +12,7 @@ public interface ChapterRepository extends JpaRepository<Chapter, Integer> {
     List<Chapter> findByThumbnailIsNull();
     List<Chapter> findTop100ByOrderByIdDesc();
     List<Chapter> findByPageCountIsNotNullOrderByPageCountAsc();
+    List<Chapter> findTop100ByOrderByViewsDesc();
+    List<Chapter> findTop100ByOrderByViewsAsc();
     
 }

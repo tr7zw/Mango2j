@@ -1,6 +1,7 @@
 package dev.tr7zw.mango2j.controller;
 
 import java.io.File;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -40,12 +41,17 @@ public class ReaderController {
         // Add necessary attributes to the model
         model.addAttribute("mode", "continuous");
         Chapter chapter = chapterRepo.getReferenceById(id);
+        chapter.setViews((chapter.getViews() == null ? 0 : chapter.getViews()) + 1);
+        System.out.println(chapter.getViews() + " " + chapter.getLastView());
+        chapter.setLastView(Instant.now());
+        chapterRepo.save(chapter);
         Title title = titleRepo.findByFullPath(chapter.getPath());
         ChapterWrapper chapterWrapper = fileService.getChapterWrapper(new File(chapter.getFullPath()).toPath());
         model.addAttribute("items", chapterWrapper.getFilesTyped(id));
         model.addAttribute("titleid", "123");
         model.addAttribute("entryid", id);
         model.addAttribute("page_idx", 0);
+        model.addAttribute("margin", 0);
         model.addAttribute("base_url", "http://localhost:8080");
         model.addAttribute("exit_url", "/library/" + title.getId());
         model.addAttribute("delete_url", "/admin/delete/" + chapter.getId());

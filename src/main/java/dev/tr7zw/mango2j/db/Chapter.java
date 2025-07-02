@@ -1,5 +1,7 @@
 package dev.tr7zw.mango2j.db;
 
+import java.time.Instant;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -44,5 +46,13 @@ public class Chapter {
     @Getter
     @Setter
     private Integer pageCount;
+    
+    @Getter
+    @Setter
+    private Integer views = 0;
+    
+    @Getter
+    @Setter
+    private Instant lastView = null;
     
 }

@@ -30,6 +30,8 @@ import net.coobird.thumbnailator.Thumbnails;
 public class ThumbnailGenerator implements DisposableBean {
 
     @Autowired
+    private JobLock jobLock;
+    @Autowired
     private ChapterRepository chapterRepo;
     @Autowired
     private FileService fileService;
@@ -41,6 +43,7 @@ public class ThumbnailGenerator implements DisposableBean {
     @Async
     public void executeLongRunningTask() {
         if (lock.tryLock()) {
+            jobLock.getLock().lock();
             try {
                 if (!isRunning) {
                     isRunning = true;
@@ -51,6 +54,7 @@ public class ThumbnailGenerator implements DisposableBean {
                     log.info("Thumbnail task is already in progress.");
                 }
             } finally {
+                jobLock.getLock().unlock();
                 lock.unlock();
                 isRunning = false;
             }
