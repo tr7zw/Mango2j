@@ -1,5 +1,6 @@
 package dev.tr7zw.mango2j.controller;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -62,6 +63,10 @@ public class LibraryController {
             @RequestParam(name = "orderBy", defaultValue = "NEWEST") String orderBy, Model model) {
         // Add necessary attributes to the model
         Title title = titleRepo.getReferenceById(id);
+        Title parent = titleRepo.findByFullPath(new File(title.getFullPath()).getParent());
+        if (parent != null) {
+            model.addAttribute("back", parent.getId());
+        }
         model.addAttribute("is_admin", true); // Example attribute, replace with your logic
         List<Title> titles = titleRepo.findByPath(title.getFullPath());
         titles.sort((a, b) -> a.getName().compareToIgnoreCase(b.getName()));
@@ -96,6 +101,7 @@ public class LibraryController {
         }
         model.addAttribute("chapters", chapters);
         model.addAttribute("name", title.getName());
+        model.addAttribute("path", title.getPath());
         model.addAttribute("orderBy", orderBy.toUpperCase());
         model.addAttribute("chapterThumbnails", generateThumbnails(titles));
         // Return the name of the Thymeleaf template without the extension
@@ -106,7 +112,7 @@ public class LibraryController {
     public String empty(Model model) {
         // Add necessary attributes to the model
         model.addAttribute("is_admin", true); // Example attribute, replace with your logic
-        List<Chapter> chapters = chapterRepo.findByPageCountIsNotNullOrderByPageCountAsc();
+        List<Chapter> chapters = chapterRepo.findEmptyDownloads();
         model.addAttribute("chapters", chapters);
         model.addAttribute("titles", new ArrayList<>());
         model.addAttribute("name", "Empty");

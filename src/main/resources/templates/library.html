@@ -12,10 +12,11 @@
     <div class="uk-section uk-section-small" style="position:relative;">
         <div class="uk-container uk-container-small">
             <h2 class="uk-title" th:text="'Library - ' + (${name != null ? name : 'Home'})"></h2>
-            <p class="uk-text-meta" th:text="${titles.size + chapters.size} + ' titles found'"></p>
+            <a class="uk-text-meta" th:if="${back != null && path != null}" th:text="'Back - ' + ${path}" th:href="'/library/' + ${back}"></a>
+            <p class="uk-text-meta" th:text="${titles.size + chapters.size} + ' entries found'"></p>
 			
             <!-- Box to set the "orderBy"" Parameter for NAME/VIEWS/PAGES/LAST_VIEWED/NEWEST -->
-            <div class="uk-margin-bottom uk-flex uk-flex-between">
+            <div th:if="${!chapters.empty}" class="uk-margin-bottom uk-flex uk-flex-between">
                 <div>
                     <a class="uk-button uk-button-default" th:href="@{?orderBy=newest}">Newest</a>
                     <a class="uk-button uk-button-default" th:href="@{?orderBy=name}">Name</a>
