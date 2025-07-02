@@ -11,6 +11,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 
+import dev.tr7zw.mango2j.Settings;
 import dev.tr7zw.mango2j.db.Chapter;
 import dev.tr7zw.mango2j.db.ChapterRepository;
 import dev.tr7zw.mango2j.db.Title;
@@ -18,12 +19,15 @@ import dev.tr7zw.mango2j.db.TitleRepository;
 import dev.tr7zw.mango2j.jobs.FileScanner;
 import dev.tr7zw.mango2j.jobs.ThumbnailGenerator;
 import dev.tr7zw.mango2j.service.MoveTargetService;
+import io.github.ollama4j.OllamaAPI;
 import lombok.extern.java.Log;
 
 @Controller
 @Log
 public class AdminController {
 
+    @Autowired
+    private Settings settings;
     @Autowired
     private ThumbnailGenerator thumbnailGenerator;
     @Autowired
@@ -79,6 +83,12 @@ public class AdminController {
         chapter.setPath(targetFile.toPath().getParent().toString());
         chapterRepo.save(chapter);
         return "redirect:/library/" + title.getId();
+    }
+    
+    @GetMapping("/admin/pingOllama")
+    public ResponseEntity<String> pingOllama() throws IOException {
+        OllamaAPI ollamaAPI = new OllamaAPI(settings.getOllamaHost());
+        return new ResponseEntity<>("Ollama Status: " + ollamaAPI.ping(), null, HttpStatus.OK);
     }
     
 }
