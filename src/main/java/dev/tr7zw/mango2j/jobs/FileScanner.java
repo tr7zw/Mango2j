@@ -67,6 +67,9 @@ public class FileScanner implements DisposableBean {
                     deleteRemovedChapters();
                     if (cancel)
                         return;
+                    deleteEmptyTitles();
+                    if (cancel)
+                        return;
                     triggered = true;
                     log.info("File Scanner task completed.");
                 } else {
@@ -143,6 +146,19 @@ public class FileScanner implements DisposableBean {
             }
         });
     }
+    
+    private void deleteEmptyTitles() {
+        titleRepo.findAll().forEach(dbTitle -> {
+            if (cancel)
+                return;
+            if (chapterRepo.findByPath(dbTitle.getFullPath()).isEmpty()) {
+                File f = new File(dbTitle.getFullPath());
+                titleRepo.delete(dbTitle);
+                log.info("Deleted " + f);
+            }
+        });
+    }
+
 
     @Override
     public void destroy() throws Exception {
