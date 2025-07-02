@@ -23,6 +23,8 @@ import lombok.extern.java.Log;
 public class ImageCounter implements DisposableBean {
 
     @Autowired
+    private JobLock jobLock;
+    @Autowired
     private ChapterRepository chapterRepo;
     @Autowired
     private FileService fileService;
@@ -34,6 +36,7 @@ public class ImageCounter implements DisposableBean {
     @Async
     public void executeLongRunningTask() {
         if (lock.tryLock()) {
+            jobLock.getLock().lock();
             try {
                 if (!isRunning) {
                     isRunning = true;
@@ -44,6 +47,7 @@ public class ImageCounter implements DisposableBean {
                     log.info("ImageCounter task is already in progress.");
                 }
             } finally {
+                jobLock.getLock().unlock();
                 lock.unlock();
                 isRunning = false;
             }
@@ -60,10 +64,11 @@ public class ImageCounter implements DisposableBean {
                 ChapterWrapper chapterWrapper = fileService.getChapterWrapper(new File(chapter.getFullPath()).toPath());
                 Integer size = chapterWrapper.getFilesTyped(chapter.getId()).size();
                 Integer old = chapter.getPageCount();
-                if(!Objects.equals(size, old)) {
+                if (!Objects.equals(size, old)) {
                     chapter.setPageCount(chapterWrapper.getFilesTyped(chapter.getId()).size());
                     chapterRepo.save(chapter);
-                    log.log(Level.INFO, "Updated chapter size of " + chapter.getFullPath() + " from " + old + " to " + size);
+                    log.log(Level.INFO,
+                            "Updated chapter size of " + chapter.getFullPath() + " from " + old + " to " + size);
                 }
             } catch (Exception ex) {
                 log.log(Level.WARNING, "Error while processing chapter " + chapter.getFullPath(), ex);

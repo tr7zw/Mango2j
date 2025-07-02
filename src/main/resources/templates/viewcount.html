@@ -13,18 +13,6 @@
         <div class="uk-container uk-container-small">
             <h2 class="uk-title" th:text="'Library - ' + (${name != null ? name : 'Home'})"></h2>
             <p class="uk-text-meta" th:text="${titles.size + chapters.size} + ' titles found'"></p>
-			
-            <!-- Box to set the "orderBy"" Parameter for NAME/VIEWS/PAGES/LAST_VIEWED/NEWEST -->
-            <div class="uk-margin-bottom uk-flex uk-flex-between">
-                <div>
-                    <a class="uk-button uk-button-default" th:href="@{?orderBy=newest}">Newest</a>
-                    <a class="uk-button uk-button-default" th:href="@{?orderBy=name}">Name</a>
-                    <a class="uk-button uk-button-default" th:href="@{?orderBy=views}">Views</a>
-                    <a class="uk-button uk-button-default" th:href="@{?orderBy=pages}">Pages</a>
-                    <a class="uk-button uk-button-default" th:href="@{?orderBy=lastViewed}">Last Viewed</a>
-                </div>
-            </div>
-
             <div class="uk-grid-small" uk-grid>
                 <!--<div class="uk-margin-bottom uk-width-3-4@s">
                     <form class="uk-search uk-search-default">
@@ -56,7 +44,7 @@
                             <img th:if="${item.thumbnail != null}" width="100%" height="100%" alt="" uk-img="" th:src="'/thumbnail/' + ${item.id}">
                         </div>
                         <div class="uk-card-body">
-                            <a class="uk-card-title break-word uk-margin-remove-top uk-text-meta uk-display-inline-block no-modal ddd-truncated" th:text="${'VIEWS'.equals(orderBy) ? '(' + item.views + ') ' : ''} + ${'PAGES'.equals(orderBy) ? '(' + item.pageCount + ') ' : ''} + ${'LASTVIEWED'.equals(orderBy) ? '(' + (item.lastView == null ? '-' : item.lastView.toString().split('T')[0]) + ') ' : ''} +  ${item.name}" th:href="'/reader/' + ${item.id}"></a>
+                            <a class="uk-card-title break-word uk-margin-remove-top uk-text-meta uk-display-inline-block no-modal ddd-truncated" th:text="'(' + ${item.views} + ') ' + ${item.name}" th:href="'/reader/' + ${item.id}"></a>
                         </div>
                     </div>
                 </div>

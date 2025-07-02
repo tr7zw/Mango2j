@@ -27,6 +27,8 @@ import lombok.extern.java.Log;
 public class FileScanner implements DisposableBean {
 
     @Autowired
+    private JobLock jobLock;
+    @Autowired
     private Settings settings;
     @Autowired
     private TitleRepository titleRepo;
@@ -48,6 +50,7 @@ public class FileScanner implements DisposableBean {
     public void executeLongRunningTask() {
         boolean triggered = false;
         if (lock.tryLock()) {
+            jobLock.getLock().lock();
             try {
                 if (!isRunning) {
                     isRunning = true;
@@ -70,6 +73,7 @@ public class FileScanner implements DisposableBean {
                     log.info("File Scanner task is already in progress.");
                 }
             } finally {
+                jobLock.getLock().unlock();
                 lock.unlock();
                 isRunning = false;
             }
@@ -139,7 +143,7 @@ public class FileScanner implements DisposableBean {
             }
         });
     }
-    
+
     @Override
     public void destroy() throws Exception {
         cancel = true;
