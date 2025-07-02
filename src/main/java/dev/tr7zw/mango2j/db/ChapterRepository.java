@@ -3,6 +3,7 @@ package dev.tr7zw.mango2j.db;
 import java.util.List;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 
 public interface ChapterRepository extends JpaRepository<Chapter, Integer> {
     // You can add custom query methods here if needed
@@ -11,7 +12,11 @@ public interface ChapterRepository extends JpaRepository<Chapter, Integer> {
     boolean existsByFullPath(String fullPath);
     List<Chapter> findByThumbnailIsNull();
     List<Chapter> findTop100ByOrderByIdDesc();
-    List<Chapter> findByPageCountIsNotNullOrderByPageCountAsc();
+    @Query("SELECT c FROM Chapter c " +
+            "WHERE c.pageCount IS NOT NULL " +
+            "AND (c.views IS NULL OR c.views = 0) " +
+            "ORDER BY c.pageCount ASC")
+    List<Chapter> findEmptyDownloads();
     List<Chapter> findTop100ByOrderByViewsDesc();
     List<Chapter> findTop100ByOrderByViewsAsc();
     
