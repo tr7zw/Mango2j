@@ -15,6 +15,10 @@ public class Settings {
     @Getter
     @Value("${mango.ollamaHost}")
     private String ollamaHost;
+    
+    @Getter
+    @Value("${mango.ollamaPrompt}")
+    private String ollamaPrompt;
 
     public File getBaseDir() {
         return new File(baseDir);

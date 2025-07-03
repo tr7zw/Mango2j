@@ -55,4 +55,13 @@ public class Chapter {
     @Setter
     private Instant lastView = null;
     
+    @Getter
+    @Setter
+    @Column(length = 10_000)
+    private String description;
+    
+    @Getter
+    @Setter
+    private float[] embedding;
+    
 }

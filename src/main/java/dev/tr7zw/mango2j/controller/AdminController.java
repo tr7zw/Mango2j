@@ -3,6 +3,7 @@ package dev.tr7zw.mango2j.controller;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -10,16 +11,16 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestParam;
 
-import dev.tr7zw.mango2j.Settings;
 import dev.tr7zw.mango2j.db.Chapter;
 import dev.tr7zw.mango2j.db.ChapterRepository;
 import dev.tr7zw.mango2j.db.Title;
 import dev.tr7zw.mango2j.db.TitleRepository;
 import dev.tr7zw.mango2j.jobs.FileScanner;
 import dev.tr7zw.mango2j.jobs.ThumbnailGenerator;
+import dev.tr7zw.mango2j.service.AiService;
 import dev.tr7zw.mango2j.service.MoveTargetService;
-import io.github.ollama4j.OllamaAPI;
 import lombok.extern.java.Log;
 
 @Controller
@@ -27,7 +28,7 @@ import lombok.extern.java.Log;
 public class AdminController {
 
     @Autowired
-    private Settings settings;
+    private AiService aiService;
     @Autowired
     private ThumbnailGenerator thumbnailGenerator;
     @Autowired
@@ -87,8 +88,24 @@ public class AdminController {
     
     @GetMapping("/admin/pingOllama")
     public ResponseEntity<String> pingOllama() throws IOException {
-        OllamaAPI ollamaAPI = new OllamaAPI(settings.getOllamaHost());
-        return new ResponseEntity<>("Ollama Status: " + ollamaAPI.ping(), null, HttpStatus.OK);
+        return new ResponseEntity<>("Ollama Status: " + aiService.available(), null, HttpStatus.OK);
+    }
+    
+    
+    @GetMapping("/admin/find")
+    public ResponseEntity<String> find(@RequestParam(name = "value") String value) throws IOException {
+        List<Chapter> chapters = aiService.findClosest(value, 3);
+        return new ResponseEntity<>("Chapters: " + chapters.stream().map(c -> c.getName() + "<br>" + c.getDescription() + "<br><br>").toList(), null, HttpStatus.OK);
+    }
+    
+    @GetMapping("/admin/reset")
+    public ResponseEntity<String> reset() throws IOException {
+        for(Chapter chapter : chapterRepo.findAll()) {
+            chapter.setDescription(null);
+            chapter.setEmbedding(null);
+            chapterRepo.save(chapter);
+        }
+        return new ResponseEntity<>("Ok", null, HttpStatus.OK);
     }
     
 }

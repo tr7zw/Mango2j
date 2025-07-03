@@ -17,6 +17,12 @@ public interface ChapterRepository extends JpaRepository<Chapter, Integer> {
             "AND (c.views IS NULL OR c.views = 0) " +
             "ORDER BY c.pageCount ASC")
     List<Chapter> findEmptyDownloads();
+    @Query("SELECT c FROM Chapter c " +
+            "WHERE c.pageCount IS NOT NULL " +
+            "AND c.views > 0 " +
+            "AND c.description IS NULL " +
+            "ORDER BY c.views DESC")
+    List<Chapter> findReadChaptersWithoutDescription();
     List<Chapter> findTop100ByOrderByViewsDesc();
     List<Chapter> findTop100ByOrderByViewsAsc();
     

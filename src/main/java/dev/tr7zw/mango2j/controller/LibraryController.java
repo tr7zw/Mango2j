@@ -19,6 +19,7 @@ import dev.tr7zw.mango2j.db.Chapter;
 import dev.tr7zw.mango2j.db.ChapterRepository;
 import dev.tr7zw.mango2j.db.Title;
 import dev.tr7zw.mango2j.db.TitleRepository;
+import dev.tr7zw.mango2j.service.AiService;
 
 @Controller
 public class LibraryController {
@@ -29,6 +30,8 @@ public class LibraryController {
     private ChapterRepository chapterRepo;
     @Autowired
     private Settings settings;
+    @Autowired
+    private AiService aiService;
 
     @GetMapping("/")
     public String index(Model model) {
@@ -145,6 +148,26 @@ public class LibraryController {
         //model.addAttribute("chapterThumbnails", generateThumbnails(titles));
         // Return the name of the Thymeleaf template without the extension
         return "viewcount";
+    }
+    
+    @GetMapping("/search")
+    public String search(@RequestParam(name = "query", required = false) String query, Model model) {
+        List<Chapter> chapters = new ArrayList<>();
+        if(query != null && !query.isBlank()) {
+            // Use AI service to find closest chapters based on the search value
+            chapters = aiService.findClosest(query, 30);
+            model.addAttribute("name", "Search Results for: " + query);
+        } else {
+            model.addAttribute("name", "Search");
+        }
+        // Add necessary attributes to the model
+        model.addAttribute("is_admin", true); // Example attribute, replace with your logic
+        model.addAttribute("chapters", chapters);
+        model.addAttribute("query", query);
+        model.addAttribute("titles", new ArrayList<>());
+        //model.addAttribute("chapterThumbnails", generateThumbnails(titles));
+        // Return the name of the Thymeleaf template without the extension
+        return "search";
     }
 
     private Map<Title, Integer> generateThumbnails(List<Title> titles) {

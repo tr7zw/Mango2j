@@ -1,7 +1,5 @@
 package dev.tr7zw.mango2j.jobs;
 
-import java.io.File;
-import java.util.Objects;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Level;
@@ -13,21 +11,20 @@ import org.springframework.stereotype.Component;
 
 import dev.tr7zw.mango2j.db.Chapter;
 import dev.tr7zw.mango2j.db.ChapterRepository;
-import dev.tr7zw.mango2j.service.ChapterWrapper;
-import dev.tr7zw.mango2j.service.FileService;
+import dev.tr7zw.mango2j.service.AiService;
 import lombok.Getter;
 import lombok.extern.java.Log;
 
 @Component
 @Log
-public class ImageCounter implements DisposableBean {
+public class ChapterAnalyser implements DisposableBean {
 
     @Autowired
     private JobLock jobLock;
     @Autowired
-    private ChapterRepository chapterRepo;
+    private AiService aiService;
     @Autowired
-    private FileService fileService;
+    private ChapterRepository chapterRepo;
     private final Lock lock = new ReentrantLock();
     @Getter
     private boolean isRunning = false;
@@ -35,16 +32,20 @@ public class ImageCounter implements DisposableBean {
 
     @Async
     public void executeLongRunningTask() {
+        if (!aiService.available()) {
+            log.warning("AI Service is not available, skipping ChapterAnalyser task.");
+            return;
+        }
         if (lock.tryLock()) {
             jobLock.getLock().lock();
             try {
                 if (!isRunning) {
                     isRunning = true;
-                    log.info("ImageCounter task started.");
+                    log.info("ChapterAnalyser task started.");
                     processChapters();
-                    log.info("ImageCounter task completed.");
+                    log.info("ChapterAnalyser task completed.");
                 } else {
-                    log.info("ImageCounter task is already in progress.");
+                    log.info("ChapterAnalyser task is already in progress.");
                 }
             } finally {
                 jobLock.getLock().unlock();
@@ -52,26 +53,27 @@ public class ImageCounter implements DisposableBean {
                 isRunning = false;
             }
         } else {
-            log.info("ImageCounter task is already locked.");
+            log.info("ChapterAnalyser task is already locked.");
         }
     }
 
     private void processChapters() {
-        for (Chapter chapter : chapterRepo.findAll()) {
+        for (Chapter chapter : chapterRepo.findReadChaptersWithoutDescription()) {
             if (cancel)
                 return;
             try {
-                ChapterWrapper chapterWrapper = fileService.getChapterWrapper(new File(chapter.getFullPath()).toPath());
-                Integer size = chapterWrapper.getFilesTyped().size();
-                Integer old = chapter.getPageCount();
-                if (!Objects.equals(size, old)) {
-                    chapter.setPageCount(chapterWrapper.getFilesTyped().size());
-                    chapterRepo.save(chapter);
-                    log.log(Level.INFO,
-                            "Updated chapter size of " + chapter.getFullPath() + " from " + old + " to " + size);
+                if (chapter.getDescription() == null || chapter.getDescription().isEmpty()) {
+                    log.info("Generating description for chapter: " + chapter.getFullPath());
+                    String description = aiService.generateDescription(chapter);
+                    if (description != null && !description.isEmpty()) {
+                        chapter.setDescription(description);
+                        chapter.setEmbedding(aiService.embed(description));
+                        chapterRepo.save(chapter);
+                    }
                 }
             } catch (Exception ex) {
                 log.log(Level.WARNING, "Error while processing chapter " + chapter.getFullPath(), ex);
+                return; // Stop processing on error
             }
         }
     }

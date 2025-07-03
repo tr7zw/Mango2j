@@ -11,19 +11,15 @@
     <!-- Your library content here -->
     <div class="uk-section uk-section-small" style="position:relative;">
         <div class="uk-container uk-container-small">
-            <h2 class="uk-title" th:text="'Library - ' + (${name != null ? name : 'Home'})"></h2>
+            <h2 class="uk-title" th:text="(${name != null ? name : 'Home'})"></h2>
             <a class="uk-text-meta" th:if="${back != null && path != null}" th:text="'Back - ' + ${path}" th:href="'/library/' + ${back}"></a>
-            <p class="uk-text-meta" th:text="${titles.size + chapters.size} + ' entries found'"></p>
+            <p class="uk-text-meta" th:text="${chapters.size()} + ' entries found'"></p>
 			
-            <!-- Box to set the "orderBy"" Parameter for NAME/VIEWS/PAGES/LAST_VIEWED/NEWEST -->
-            <div th:if="${!chapters.empty}" class="uk-margin-bottom uk-flex uk-flex-between">
-                <div>
-                    <a class="uk-button uk-button-default" th:href="@{?orderBy=newest}">Newest</a>
-                    <a class="uk-button uk-button-default" th:href="@{?orderBy=name}">Name</a>
-                    <a class="uk-button uk-button-default" th:href="@{?orderBy=views}">Views</a>
-                    <a class="uk-button uk-button-default" th:href="@{?orderBy=pages}">Pages</a>
-                    <a class="uk-button uk-button-default" th:href="@{?orderBy=lastViewed}">Last Viewed</a>
-                </div>
+            <div class="uk-margin-bottom uk-flex uk-flex-between">
+                <!-- searchbox that gets to value when pressing enter -->
+                <form class="uk-search uk-search-default" th:action="@{/search}" method="get">
+                    <span uk-search-icon></span>
+                    <input class="uk-search-input" type="search" name="query" placeholder="Search" th:value="${query}">
             </div>
 
             <div class="uk-grid-small" uk-grid>
