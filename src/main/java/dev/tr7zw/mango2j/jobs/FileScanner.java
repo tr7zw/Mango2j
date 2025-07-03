@@ -39,6 +39,8 @@ public class FileScanner implements DisposableBean {
     @Autowired
     private ThumbnailGenerator thumbnailGenerator;
     @Autowired
+    private ChapterAnalyser chapterAnalyser;
+    @Autowired
     private ImageCounter imageCounter;
     private final Lock lock = new ReentrantLock();
     @Getter
@@ -86,6 +88,7 @@ public class FileScanner implements DisposableBean {
         if (triggered) {
             thumbnailGenerator.executeLongRunningTask();
             imageCounter.executeLongRunningTask();
+            chapterAnalyser.executeLongRunningTask();
         }
     }
 
