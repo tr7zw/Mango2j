@@ -6,7 +6,7 @@
 	<parent>
 		<groupId>org.springframework.boot</groupId>
 		<artifactId>spring-boot-starter-parent</artifactId>
-		<version>3.5.3</version>
+		<version>3.5.6</version>
 		<relativePath /> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>dev.tr7zw</groupId>
@@ -21,7 +21,7 @@
 		<dependency>
 			<groupId>io.github.ollama4j</groupId>
 			<artifactId>ollama4j</artifactId>
-			<version>1.0.100</version>
+			<version>1.1.0</version>
 		</dependency>
 		<!-- https://mvnrepository.com/artifact/org.sejda.imageio/webp-imageio -->
 		<dependency>
