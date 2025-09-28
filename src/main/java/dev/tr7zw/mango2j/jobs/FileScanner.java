@@ -154,7 +154,7 @@ public class FileScanner implements DisposableBean {
         titleRepo.findAll().forEach(dbTitle -> {
             if (cancel)
                 return;
-            if (chapterRepo.findByPath(dbTitle.getFullPath()).isEmpty()) {
+            if (chapterRepo.findByPath(dbTitle.getFullPath()).isEmpty() && titleRepo.findByPath(dbTitle.getFullPath()).isEmpty()) {
                 File f = new File(dbTitle.getFullPath());
                 titleRepo.delete(dbTitle);
                 log.info("Deleted " + f);
