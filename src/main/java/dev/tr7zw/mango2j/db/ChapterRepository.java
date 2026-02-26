@@ -21,7 +21,6 @@ public interface ChapterRepository extends JpaRepository<Chapter, Integer>, JpaS
     @Query("SELECT c FROM Chapter c " +
             "WHERE c.pageCount IS NOT NULL " +
             "AND c.views > 0 " +
-            "AND c.description IS NULL " +
             "ORDER BY c.views DESC")
     List<Chapter> findTop100ByOrderByViewsDesc();
     List<Chapter> findTop100ByOrderByViewsAsc();
