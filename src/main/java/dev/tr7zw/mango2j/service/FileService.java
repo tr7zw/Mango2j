@@ -164,6 +164,16 @@ public class FileService {
             return files.get(id).split("\\.")[files.get(id).split("\\.").length-1].toLowerCase();
         }
 
+        @Override
+        public boolean hasFile(String name) {
+            return new File(dir, name).exists();
+        }
+
+        @Override
+        public InputStream getFile(String name) throws FileNotFoundException {
+            return new FileInputStream(new File(dir, name));
+        }
+
     }
 
     @RequiredArgsConstructor
@@ -234,6 +244,16 @@ public class FileService {
                 e.printStackTrace();
             }
             return null;
+        }
+
+        @Override
+        public boolean hasFile(String name) {
+            return getInternalFiles().contains(name);
+        }
+
+        @Override
+        public InputStream getFile(String name) throws FileNotFoundException {
+            return getInputStream(getInternalFiles().indexOf(name));
         }
 
     }

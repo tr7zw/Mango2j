@@ -17,16 +17,12 @@ import dev.tr7zw.mango2j.db.Chapter;
 import dev.tr7zw.mango2j.db.ChapterRepository;
 import dev.tr7zw.mango2j.db.Title;
 import dev.tr7zw.mango2j.db.TitleRepository;
-import dev.tr7zw.mango2j.service.AiService;
 import dev.tr7zw.mango2j.service.ChapterWrapper;
 import dev.tr7zw.mango2j.service.FileService;
 import dev.tr7zw.mango2j.service.MoveTargetService;
 
 @Controller
 public class ReaderController {
-    
-    @Autowired
-    private AiService aiService;
 
     private final FileService fileService;
     private final TitleRepository titleRepo;
@@ -40,12 +36,6 @@ public class ReaderController {
         this.titleRepo = titleRepo;
         this.chapterRepo = chapterRepo;
         this.moveTargetService = moveTargetService;
-    }
-
-    @GetMapping("/desc/{id}")
-    public ResponseEntity<String> getDescription(@PathVariable Integer id, Model model) {
-        Chapter chapter = chapterRepo.getReferenceById(id);
-        return new ResponseEntity<>(aiService.generateDescription(chapter), null, HttpStatus.OK);
     }
     
     @GetMapping("/reader/{id}")

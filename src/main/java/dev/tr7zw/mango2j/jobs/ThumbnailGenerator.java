@@ -70,6 +70,12 @@ public class ThumbnailGenerator implements DisposableBean {
             try {
                 ChapterWrapper chapterWrapper = fileService.getChapterWrapper(new File(chapter.getFullPath()).toPath());
                 int id = 0;
+                for(int i = 0; i < chapterWrapper.getFiles() && i < 10; i++) {
+                    if (!chapterWrapper.getFileType(i).startsWith("txt")) {
+                        id = i;
+                        break;
+                    }
+                }
                 if (!chapterWrapper.hasFile(id)) {
                     log.info("No images in file " + chapter.getFullPath());
                     continue;

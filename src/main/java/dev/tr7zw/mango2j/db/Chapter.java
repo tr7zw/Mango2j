@@ -60,8 +60,4 @@ public class Chapter {
     @Column(length = 10_000)
     private String description;
     
-    @Getter
-    @Setter
-    private float[] embedding;
-    
 }
