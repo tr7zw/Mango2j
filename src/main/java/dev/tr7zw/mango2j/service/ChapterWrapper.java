@@ -13,6 +13,8 @@ public interface ChapterWrapper {
     InputStream getInputStream(int id) throws FileNotFoundException;
     boolean hasFile(int id);
     String getFileType(int id);
+    boolean hasFile(String name);
+    InputStream getFile(String name) throws FileNotFoundException;
     default byte[] getBytes(int id) throws IOException {
         ByteArrayOutputStream buffer = new ByteArrayOutputStream();
         try(InputStream in = getInputStream(id)){

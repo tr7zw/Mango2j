@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.*;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -19,7 +20,6 @@ import dev.tr7zw.mango2j.db.Chapter;
 import dev.tr7zw.mango2j.db.ChapterRepository;
 import dev.tr7zw.mango2j.db.Title;
 import dev.tr7zw.mango2j.db.TitleRepository;
-import dev.tr7zw.mango2j.service.AiService;
 
 @Controller
 public class LibraryController {
@@ -30,8 +30,6 @@ public class LibraryController {
     private ChapterRepository chapterRepo;
     @Autowired
     private Settings settings;
-    @Autowired
-    private AiService aiService;
 
     @GetMapping("/")
     public String index(Model model) {
@@ -154,9 +152,14 @@ public class LibraryController {
     public String search(@RequestParam(name = "query", required = false) String query, Model model) {
         List<Chapter> chapters = new ArrayList<>();
         if(query != null && !query.isBlank()) {
-            // Use AI service to find closest chapters based on the search value
-            chapters = aiService.findClosest(query, 30);
-            model.addAttribute("name", "Search Results for: " + query);
+            chapters = chapterRepo.findAll(ChapterRepository.descriptionMatches(query));
+            model.addAttribute("name", "Search results for: " + query);
+            if(chapters.isEmpty()) {
+                Page<Chapter> result = chapterRepo.findAll(ChapterRepository.descriptionRankedSearch(query), PageRequest.of(0, 20));
+                chapters = result.getContent();
+                model.addAttribute("name", "Closest search results for: " + query);
+            }
+
         } else {
             model.addAttribute("name", "Search");
         }

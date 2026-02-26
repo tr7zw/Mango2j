@@ -19,7 +19,6 @@ import dev.tr7zw.mango2j.db.Title;
 import dev.tr7zw.mango2j.db.TitleRepository;
 import dev.tr7zw.mango2j.jobs.FileScanner;
 import dev.tr7zw.mango2j.jobs.ThumbnailGenerator;
-import dev.tr7zw.mango2j.service.AiService;
 import dev.tr7zw.mango2j.service.MoveTargetService;
 import lombok.extern.java.Log;
 
@@ -27,8 +26,6 @@ import lombok.extern.java.Log;
 @Log
 public class AdminController {
 
-    @Autowired
-    private AiService aiService;
     @Autowired
     private ThumbnailGenerator thumbnailGenerator;
     @Autowired
@@ -86,23 +83,10 @@ public class AdminController {
         return "redirect:/library/" + title.getId();
     }
     
-    @GetMapping("/admin/pingOllama")
-    public ResponseEntity<String> pingOllama() throws IOException {
-        return new ResponseEntity<>("Ollama Status: " + aiService.available(), null, HttpStatus.OK);
-    }
-    
-    
-    @GetMapping("/admin/find")
-    public ResponseEntity<String> find(@RequestParam(name = "value") String value) throws IOException {
-        List<Chapter> chapters = aiService.findClosest(value, 3);
-        return new ResponseEntity<>("Chapters: " + chapters.stream().map(c -> c.getName() + "<br>" + c.getDescription() + "<br><br>").toList(), null, HttpStatus.OK);
-    }
-    
     @GetMapping("/admin/reset")
     public ResponseEntity<String> reset() throws IOException {
         for(Chapter chapter : chapterRepo.findAll()) {
             chapter.setDescription(null);
-            chapter.setEmbedding(null);
             chapterRepo.save(chapter);
         }
         return new ResponseEntity<>("Ok", null, HttpStatus.OK);
