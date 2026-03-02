@@ -139,7 +139,7 @@ public class LibraryController {
     public String bottom(Model model) {
         // Add necessary attributes to the model
         model.addAttribute("is_admin", true); // Example attribute, replace with your logic
-        List<Chapter> chapters = chapterRepo.findTop100ByOrderByViewsAsc();
+        List<Chapter> chapters = chapterRepo.findTop100ByOrderByViewsAscIdDesc();
         model.addAttribute("chapters", chapters);
         model.addAttribute("titles", new ArrayList<>());
         model.addAttribute("name", "Least Viewed");

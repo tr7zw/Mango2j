@@ -23,7 +23,7 @@ public interface ChapterRepository extends JpaRepository<Chapter, Integer>, JpaS
             "AND c.views > 0 " +
             "ORDER BY c.views DESC")
     List<Chapter> findTop100ByOrderByViewsDesc();
-    List<Chapter> findTop100ByOrderByViewsAsc();
+    List<Chapter> findTop100ByOrderByViewsAscIdDesc();
     List<Chapter> findByNameContainingOrDescriptionContaining(String name, String description);
 
     static Specification<Chapter> descriptionMatches(String search) {
