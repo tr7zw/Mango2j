@@ -59,7 +59,7 @@ public class FileService {
 
         public List<Path> getTitles() throws IOException {
             try (Stream<Path> pathStream = Files.list(dir.toPath())) {
-                return pathStream.filter(p -> p.toFile().isDirectory() && !isChapter(p))
+                return pathStream.filter(p -> p.toFile().isDirectory() && !isChapter(p) && !isEmptyDir(p))
                         .sorted(Comparator.comparingLong(this::getLastModifiedTime)).collect(Collectors.toList());
             }
         }
@@ -77,6 +77,15 @@ public class FileService {
         private boolean hasSubDirs(Path path) {
             try (Stream<Path> subDirStream = Files.list(path)) {
                 return subDirStream.anyMatch(p -> p.toFile().isDirectory());
+            } catch (IOException e) {
+                e.printStackTrace();
+                return true; // in doubt filter
+            }
+        }
+
+        private boolean isEmptyDir(Path path) {
+            try (Stream<Path> subFileStream = Files.list(path)) {
+                return !subFileStream.findAny().isPresent();
             } catch (IOException e) {
                 e.printStackTrace();
                 return true; // in doubt filter

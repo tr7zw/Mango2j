@@ -107,8 +107,11 @@ public class FileScanner implements DisposableBean {
             return;
         try {
             if (!titleRepo.existsByFullPath(path.toString())) {
-                titleRepo.save(new Title(path.toString(), path.getParent().toString(), path.getFileName().toString()));
-                log.info("Saved new Title:\t" + path.toString());
+                TitleWrapper title = fileService.getTitleWrapper(path);
+                if ((!title.getChapters().isEmpty() || !title.getTitles().isEmpty())) {
+                    titleRepo.save(new Title(path.toString(), path.getParent().toString(), path.getFileName().toString()));
+                    log.info("Saved new Title:\t" + path.toString());
+                }
             }
             TitleWrapper title = fileService.getTitleWrapper(path);
             for (Path subTitle : title.getTitles()) {
