@@ -274,7 +274,7 @@ public class LibraryController {
                 // Limit to top 15 tags and exclude already-searched tokens
                 suggestedTags = suggestedTags.entrySet().stream()
                     .filter(entry -> !searchedTokens.contains(entry.getKey()))
-                    .limit(15)
+                    .limit(25)
                     .collect(Collectors.toMap(
                         Map.Entry::getKey,
                         Map.Entry::getValue,
