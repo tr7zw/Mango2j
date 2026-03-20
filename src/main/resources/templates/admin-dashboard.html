@@ -71,6 +71,33 @@
                         </div>
                         <p class="text-lg font-bold font-headline text-on-surface">Running</p>
                     </div>
+
+                    <!-- Total File Size -->
+                    <div class="bg-surface-container rounded-2xl p-6 shadow-sm">
+                        <div class="flex items-center justify-between mb-4">
+                            <span class="text-sm font-headline font-bold text-on-surface/60 uppercase tracking-widest">Total Entry Size</span>
+                            <span class="material-symbols-outlined text-primary" style="font-size: 24px;">storage</span>
+                        </div>
+                        <p class="text-3xl font-black font-headline text-on-surface" th:text="${totalFileSize}">0 B</p>
+                    </div>
+
+                    <!-- Max File Size -->
+                    <div class="bg-surface-container rounded-2xl p-6 shadow-sm">
+                        <div class="flex items-center justify-between mb-4">
+                            <span class="text-sm font-headline font-bold text-on-surface/60 uppercase tracking-widest">Max Entry Size</span>
+                            <span class="material-symbols-outlined text-secondary" style="font-size: 24px;">format_size</span>
+                        </div>
+                        <p class="text-3xl font-black font-headline text-on-surface" th:text="${maxFileSize}">0 B</p>
+                    </div>
+
+                    <!-- Average File Size -->
+                    <div class="bg-surface-container rounded-2xl p-6 shadow-sm">
+                        <div class="flex items-center justify-between mb-4">
+                            <span class="text-sm font-headline font-bold text-on-surface/60 uppercase tracking-widest">Avg Entry Size</span>
+                            <span class="material-symbols-outlined text-tertiary" style="font-size: 24px;">straighten</span>
+                        </div>
+                        <p class="text-3xl font-black font-headline text-on-surface" th:text="${avgFileSize}">0 B</p>
+                    </div>
                 </div>
 
                 <!-- Most & Least Viewed -->

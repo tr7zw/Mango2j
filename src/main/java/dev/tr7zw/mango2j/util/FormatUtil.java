@@ -3,7 +3,7 @@ package dev.tr7zw.mango2j.util;
 import jakarta.annotation.Nullable;
 
 public class FormatUtil {
-    
+
     public static String formatFileSize(@Nullable Long bytes) {
         if (bytes == null || bytes == 0) {
             return "0 B";
