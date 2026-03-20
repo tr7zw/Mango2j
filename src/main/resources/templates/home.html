@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" class="dark">
+<head>
+    <th:block th:insert="~{head}"></th:block>
+</head>
+<body class="bg-surface text-on-surface font-body selection:bg-primary/30 selection:text-primary">
+    <th:block th:insert="~{navbar-top}"></th:block>
+
+    <div class="content pt-16">
+        <!-- Hero Section: Latest Content -->
+        <section class="px-6 mb-16 max-w-7xl mx-auto">
+            <div class="relative group h-[300px] md:h-[400px] rounded-xl overflow-hidden bg-surface-container-low flex flex-col justify-end p-8 md:p-12">
+                <!-- Show first chapter's cover if available -->
+                <div class="absolute inset-0" th:if="${!chapters.empty and chapters[0].thumbnail != null}">
+                    <div class="w-full h-full bg-gradient-to-r from-primary/20 to-secondary/20 group-hover:opacity-80 transition-opacity duration-700"></div>
+                    <div class="absolute inset-0 hero-gradient"></div>
+                </div>
+                <div th:if="${chapters.empty or chapters[0].thumbnail == null}" class="absolute inset-0">
+                    <div class="w-full h-full bg-gradient-to-br from-primary/10 to-secondary/10"></div>
+                    <div class="absolute inset-0 hero-gradient"></div>
+                </div>
+
+                <div class="relative z-10 max-w-2xl">
+                    <div class="flex items-center gap-3 mb-4">
+                        <span class="text-on-surface-variant text-sm" th:if="${!chapters.empty}" th:text="${totalChapters} + ' entries available'"></span>
+                    </div>
+                    <h1 class="font-headline text-4xl md:text-5xl font-bold tracking-tighter mb-6">Your Library</h1>
+                    <div class="flex flex-wrap gap-4">
+                        <a th:href="@{/library}" class="bg-gradient-to-r from-primary to-primary-container text-on-primary px-8 py-3 rounded-md font-headline font-bold flex items-center gap-2 scale-95 active:scale-90 transition-transform hover:shadow-lg hover:shadow-primary/20">
+                            <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">library_books</span>
+                            BROWSE LIBRARY
+                        </a>
+                        <a th:href="@{/search}" class="bg-surface-container-high/50 backdrop-blur-md border border-outline-variant/20 text-on-surface px-8 py-3 rounded-md font-headline font-bold hover:bg-surface-container-highest transition-colors">
+                            SEARCH
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Latest Chapters Section -->
+        <section class="px-6 mb-16 max-w-7xl mx-auto">
+            <div class="flex items-center justify-between mb-8">
+                <h2 class="font-headline text-2xl font-bold tracking-tight">Latest Entries</h2>
+                <a th:href="@{/library}" class="text-secondary font-label text-sm uppercase tracking-widest hover:underline">View All</a>
+            </div>
+            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6" th:if="${!chapters.empty}">
+                <a th:each="chapter : ${chapters}" th:if="${chapterStat.index < 30}" th:href="'/reader/' + ${chapter.id}" class="group cursor-pointer">
+                    <div class="relative aspect-[2/3] rounded-lg overflow-hidden bg-surface-container-low mb-3">
+                        <img th:if="${chapter.thumbnail != null}" th:src="'/thumbnail/' + ${chapter.id}" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110">
+                        <div th:if="${chapter.thumbnail == null}" class="w-full h-full bg-surface-container flex items-center justify-center">
+                            <span class="material-symbols-outlined text-on-surface-variant text-4xl">image_not_supported</span>
+                        </div>
+                        <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-4">
+                            <span class="material-symbols-outlined text-on-surface" style="font-variation-settings: 'FILL' 1;">play_arrow</span>
+                        </div>
+                    </div>
+                    <h3 class="font-headline font-bold text-on-surface group-hover:text-primary transition-colors line-clamp-2 text-sm" th:text="${chapter.name}"></h3>
+                    <div class="flex items-center gap-3 mt-1 text-xs text-on-surface-variant">
+                        <span th:if="${chapter.views != null}" class="flex items-center gap-1">
+                            <span class="material-symbols-outlined text-sm">visibility</span>
+                            <span th:text="${chapter.views}"></span>
+                        </span>
+                        <span th:if="${chapter.pageCount != null}" class="flex items-center gap-1">
+                            <span class="material-symbols-outlined text-sm">auto_stories</span>
+                            <span th:text="${chapter.pageCount}"></span>
+                        </span>
+                        <span th:if="${chapter.lastViewFormatted != null}" class="flex items-center gap-1">
+                            <span class="material-symbols-outlined text-sm">schedule</span>
+                            <span th:text="${chapter.lastViewFormatted}"></span>
+                        </span>
+                    </div>
+                </a>
+            </div>
+            <div th:if="${chapters.empty}" class="text-center py-12">
+                <span class="material-symbols-outlined text-on-surface-variant text-4xl mb-4 block">folder_open</span>
+                <p class="text-on-surface-variant">No chapters found. Scan your library to get started.</p>
+            </div>
+        </section>
+
+        <!-- Collections Grid -->
+        <section class="px-6 mb-16 max-w-7xl mx-auto" th:if="${!titleStats.empty}">
+            <div class="flex items-center justify-between mb-8">
+                <h2 class="font-headline text-2xl font-bold tracking-tight">Collections</h2>
+                <a th:href="@{/library}" class="text-secondary font-label text-sm uppercase tracking-widest hover:underline">Browse All</a>
+            </div>
+            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-6">
+                <div th:each="titleStat, titleLoop : ${titleStats}" th:if="${titleLoop.index < 10}" class="group cursor-pointer">
+                    <a th:href="'/library/' + ${titleStat.title.id}" class="block">
+                        <div class="relative aspect-[2/3] rounded-lg overflow-hidden bg-surface-container-low mb-3">
+                            <!-- Show thumbnail if available, fallback to folder icon -->
+                            <img th:if="${chapterThumbnails[titleStat.title.id] != null}" th:src="'/thumbnail/' + ${chapterThumbnails[titleStat.title.id]}" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110">
+                            <div th:if="${chapterThumbnails[titleStat.title.id] == null}" class="w-full h-full bg-gradient-to-br from-primary/10 to-secondary/10 group-hover:opacity-80 transition-opacity duration-500 flex items-center justify-center">
+                                <span class="material-symbols-outlined text-on-surface-variant text-3xl">folder</span>
+                            </div>
+                            <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-4">
+                                <span class="material-symbols-outlined text-on-surface" style="font-variation-settings: 'FILL' 1;">arrow_forward</span>
+                            </div>
+                        </div>
+                        <h3 class="font-headline font-bold text-on-surface group-hover:text-primary transition-colors line-clamp-2" th:text="${titleStat.title.name}"></h3>
+                        <!-- NEW: Display collection metadata -->
+                        <div class="flex items-center gap-3 mt-1 text-xs text-on-surface-variant">
+                            <span class="flex items-center gap-1">
+                                <span class="material-symbols-outlined text-sm">visibility</span>
+                                <span th:text="${titleStat.totalViews}"></span>
+                            </span>
+                            <span class="flex items-center gap-1">
+                                <span class="material-symbols-outlined text-sm">library_books</span>
+                                <span th:text="${titleStat.chapterCount}"></span>
+                            </span>
+                        </div>
+                    </a>
+                </div>
+            </div>
+        </section>
+    </div>
+</body>
+</html>

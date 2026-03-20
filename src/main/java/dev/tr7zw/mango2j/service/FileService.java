@@ -9,12 +9,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
@@ -29,8 +24,23 @@ import lombok.RequiredArgsConstructor;
 
 @Service
 public class FileService {
-    
-    private final Set<String> videoTypes = Set.of(".mp4", ".mov", ".wmv");
+
+    private final Map<String, String> fileTypeMap = new HashMap<>() {
+         {
+            put(".jpg", "IMG");
+            put(".jpeg", "IMG");
+            put(".png", "IMG");
+            put(".gif", "IMG");
+            put(".bmp", "IMG");
+            put(".jxl", "IMG");
+            put(".webp", "IMG");
+            put(".mp4", "VIDEO");
+            put(".mov", "VIDEO");
+            put(".wmv", "VIDEO");
+            put(".txt", "TXT");
+            put(".pdf", "PDF");
+        }
+    };
     
     public ChapterWrapper getChapterWrapper(Path location) {
         if (location.toFile().isDirectory()) {
@@ -124,7 +134,8 @@ public class FileService {
             List<Entry> entries = new ArrayList<>();
             List<String> files = getInternalFiles();
             for(int i = 0; i < files.size(); i++) {
-                entries.add(new Entry(i, videoTypes.contains(files.get(i).toLowerCase().substring(files.get(i).lastIndexOf('.'))) ? "VIDEO" : "IMG", files.get(i).toLowerCase().substring(files.get(i).lastIndexOf('.'))));
+                String filetype = files.get(i).toLowerCase().substring(files.get(i).lastIndexOf('.'));
+                entries.add(new Entry(i, fileTypeMap.getOrDefault(filetype, "IMG"), filetype));
             }
             return entries;
         }
@@ -212,7 +223,8 @@ public class FileService {
             List<Entry> entries = new ArrayList<>();
             List<String> files = getInternalFiles();
             for(int i = 0; i < files.size(); i++) {
-                entries.add(new Entry(i, videoTypes.contains(files.get(i).toLowerCase().substring(files.get(i).lastIndexOf('.'))) ? "VIDEO" : "IMG", files.get(i).toLowerCase().substring(files.get(i).lastIndexOf('.'))));
+                String filetype = files.get(i).toLowerCase().substring(files.get(i).lastIndexOf('.'));
+                entries.add(new Entry(i, fileTypeMap.getOrDefault(filetype, "IMG"), filetype));
             }
             return entries;
         }

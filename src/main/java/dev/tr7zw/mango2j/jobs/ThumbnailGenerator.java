@@ -3,6 +3,7 @@ package dev.tr7zw.mango2j.jobs;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.util.*;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Level;
@@ -10,6 +11,7 @@ import java.util.logging.Level;
 import javax.imageio.ImageIO;
 import javax.imageio.stream.MemoryCacheImageOutputStream;
 
+import lombok.*;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
@@ -21,7 +23,6 @@ import dev.tr7zw.mango2j.service.ChapterWrapper;
 import dev.tr7zw.mango2j.service.FileService;
 import dev.tr7zw.mango2j.util.JxlUtil;
 import dev.tr7zw.mango2j.util.WebpUtil;
-import lombok.Getter;
 import lombok.extern.java.Log;
 import net.coobird.thumbnailator.Thumbnails;
 
@@ -39,6 +40,8 @@ public class ThumbnailGenerator implements DisposableBean {
     @Getter
     private boolean isRunning = false;
     private boolean cancel = false;
+    @Setter
+    private boolean refreshImages = false;
 
     @Async
     public void executeLongRunningTask() {
@@ -57,6 +60,7 @@ public class ThumbnailGenerator implements DisposableBean {
                 jobLock.getLock().unlock();
                 lock.unlock();
                 isRunning = false;
+                refreshImages = false;
             }
         } else {
             log.info("Thumbnail task is already locked.");
@@ -64,7 +68,13 @@ public class ThumbnailGenerator implements DisposableBean {
     }
 
     private void processChapters() {
-        for (Chapter chapter : chapterRepo.findByThumbnailIsNull()) {
+        List<Chapter> chapterList;
+        if (refreshImages) {
+            chapterList = chapterRepo.findAll();
+        } else {
+            chapterList = chapterRepo.findByThumbnailIsNull();
+        }
+        for (Chapter chapter : chapterList) {
             if (cancel)
                 return;
             try {
@@ -91,7 +101,7 @@ public class ThumbnailGenerator implements DisposableBean {
                             + chapter.getFullPath());
                     continue;
                 }
-                BufferedImage thumbnail = Thumbnails.of(image).height(300).asBufferedImage();
+                BufferedImage thumbnail = Thumbnails.of(image).height(600).asBufferedImage();
                 ByteArrayOutputStream outBuffer = new ByteArrayOutputStream();
                 WebpUtil.writeAsWebp(new MemoryCacheImageOutputStream(outBuffer), thumbnail);
                 chapter.setThumbnail(outBuffer.toByteArray());

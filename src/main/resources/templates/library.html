@@ -1,71 +1,191 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org" class="dark">
 <head>
-    <!-- Include the layout's head content -->
+    <div th:with="page='Library'"></div>
     <th:block th:insert="~{head}"></th:block>
 </head>
-<body>
-    <!-- Include the layout's body content -->
-    <th:block th:insert="~{layout}"></th:block>
+<body class="bg-surface text-on-surface font-body selection:bg-primary/30 selection:text-primary">
+    <th:block th:insert="~{navbar-top}"></th:block>
 
-    <!-- Your library content here -->
-    <div class="uk-section uk-section-small" style="position:relative;">
-        <div class="uk-container uk-container-small">
-            <h2 class="uk-title" th:text="'Library - ' + (${name != null ? name : 'Home'})"></h2>
-            <a class="uk-text-meta" th:if="${back != null && path != null}" th:text="'Back - ' + ${path}" th:href="'/library/' + ${back}"></a>
-            <p class="uk-text-meta" th:text="${titles.size + chapters.size} + ' entries found'"></p>
-			
-            <!-- Box to set the "orderBy"" Parameter for NAME/VIEWS/PAGES/LAST_VIEWED/NEWEST -->
-            <div th:if="${!chapters.empty}" class="uk-margin-bottom uk-flex uk-flex-between">
+    <div class="flex pt-16 min-h-screen">
+        <!-- Desktop Sidebar -->
+        <aside class="hidden lg:flex h-full w-64 fixed left-0 top-16 bg-surface-container-low flex-col py-4 space-y-4">
+            <div class="px-6 mb-4">
+                <h2 class="text-xl font-bold text-on-surface font-headline">Library</h2>
+                <p class="text-xs font-medium text-on-surface/40 uppercase tracking-widest mt-1">Sort & Filter</p>
+            </div>
+            <div class="flex flex-col gap-1">
+                <a th:href="@{?orderBy=newest}" th:class="'flex items-center gap-3 py-3 px-4 mx-2 rounded-lg transition-all duration-200 font-medium text-sm ' + (${#strings.equals(orderBy, 'NEWEST')} ? 'bg-surface-container-high text-primary' : 'text-on-surface/50 hover:bg-surface-container hover:text-on-surface')">
+                    <span class="material-symbols-outlined text-lg">grade</span>
+                    Newest
+                </a>
+                <a th:href="@{?orderBy=views}" th:class="'flex items-center gap-3 py-3 px-4 mx-2 rounded-lg transition-all duration-200 font-medium text-sm ' + (${#strings.equals(orderBy, 'VIEWS')} ? 'bg-surface-container-high text-primary' : 'text-on-surface/50 hover:bg-surface-container hover:text-on-surface')">
+                    <span class="material-symbols-outlined text-lg">visibility</span>
+                    Views
+                </a>
+                <a th:href="@{?orderBy=lastViewed}" th:class="'flex items-center gap-3 py-3 px-4 mx-2 rounded-lg transition-all duration-200 font-medium text-sm ' + (${#strings.equals(orderBy, 'LASTVIEWED')} ? 'bg-surface-container-high text-primary' : 'text-on-surface/50 hover:bg-surface-container hover:text-on-surface')">
+                    <span class="material-symbols-outlined text-lg">history</span>
+                    Last Viewed
+                </a>
+                <a th:href="@{?orderBy=oldestViewed}" th:class="'flex items-center gap-3 py-3 px-4 mx-2 rounded-lg transition-all duration-200 font-medium text-sm ' + (${#strings.equals(orderBy, 'OLDESTVIEWED')} ? 'bg-surface-container-high text-primary' : 'text-on-surface/50 hover:bg-surface-container hover:text-on-surface')">
+                    <span class="material-symbols-outlined text-lg">history_toggle_off</span>
+                    Oldest Viewed
+                </a>
+                <a th:href="@{?orderBy=pages}" th:class="'flex items-center gap-3 py-3 px-4 mx-2 rounded-lg transition-all duration-200 font-medium text-sm ' + (${#strings.equals(orderBy, 'PAGES')} ? 'bg-surface-container-high text-primary' : 'text-on-surface/50 hover:bg-surface-container hover:text-on-surface')">
+                    <span class="material-symbols-outlined text-lg">auto_stories</span>
+                    Page Count
+                </a>
+                <a th:href="@{?orderBy=name}" th:class="'flex items-center gap-3 py-3 px-4 mx-2 rounded-lg transition-all duration-200 font-medium text-sm ' + (${#strings.equals(orderBy, 'NAME')} ? 'bg-surface-container-high text-primary' : 'text-on-surface/50 hover:bg-surface-container hover:text-on-surface')">
+                    <span class="material-symbols-outlined text-lg">sort_by_alpha</span>
+                    Name
+                </a>
+            </div>
+
+            <!-- Collections Sort Section -->
+            <h3 class="text-sm font-bold text-on-surface-variant uppercase mt-6 mb-1 px-4">Collections</h3>
+            <div class="flex flex-col gap-1">
+                <a th:href="@{?collectionOrderBy=name}" th:class="'flex items-center gap-3 py-3 px-4 mx-2 rounded-lg transition-all duration-200 font-medium text-sm ' + (${#strings.equals(collectionOrderBy, 'NAME')} ? 'bg-surface-container-high text-primary' : 'text-on-surface/50 hover:bg-surface-container hover:text-on-surface')">
+                    <span class="material-symbols-outlined text-lg">sort_by_alpha</span>
+                    Name
+                </a>
+                <a th:href="@{?collectionOrderBy=views}" th:class="'flex items-center gap-3 py-3 px-4 mx-2 rounded-lg transition-all duration-200 font-medium text-sm ' + (${#strings.equals(collectionOrderBy, 'VIEWS')} ? 'bg-surface-container-high text-primary' : 'text-on-surface/50 hover:bg-surface-container hover:text-on-surface')">
+                    <span class="material-symbols-outlined text-lg">visibility</span>
+                    Views
+                </a>
+                <a th:href="@{?collectionOrderBy=chapters}" th:class="'flex items-center gap-3 py-3 px-4 mx-2 rounded-lg transition-all duration-200 font-medium text-sm ' + (${#strings.equals(collectionOrderBy, 'CHAPTERS')} ? 'bg-surface-container-high text-primary' : 'text-on-surface/50 hover:bg-surface-container hover:text-on-surface')">
+                    <span class="material-symbols-outlined text-lg">library_books</span>
+                    Chapters
+                </a>
+                <a th:href="@{?collectionOrderBy=newest}" th:class="'flex items-center gap-3 py-3 px-4 mx-2 rounded-lg transition-all duration-200 font-medium text-sm ' + (${#strings.equals(collectionOrderBy, 'NEWEST')} ? 'bg-surface-container-high text-primary' : 'text-on-surface/50 hover:bg-surface-container hover:text-on-surface')">
+                    <span class="material-symbols-outlined text-lg">grade</span>
+                    Newest
+                </a>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="flex-1 lg:ml-64 p-6 md:p-10 bg-surface">
+            <!-- Mobile Filters -->
+            <div class="lg:hidden space-y-4 pb-6 mb-8">
+                <!-- Chapter Sorting -->
                 <div>
-                    <a class="uk-button uk-button-default" th:href="@{?orderBy=newest}">Newest</a>
-                    <a class="uk-button uk-button-default" th:href="@{?orderBy=name}">Name</a>
-                    <a class="uk-button uk-button-default" th:href="@{?orderBy=views}">Views</a>
-                    <a class="uk-button uk-button-default" th:href="@{?orderBy=pages}">Pages</a>
-                    <a class="uk-button uk-button-default" th:href="@{?orderBy=lastViewed}">Last Viewed</a>
+                    <p class="text-xs font-bold text-on-surface/60 uppercase tracking-widest mb-2 px-2">Entries</p>
+                    <div class="flex overflow-x-auto gap-3 hide-scrollbar">
+                        <a th:href="@{?orderBy=newest}" th:class="'whitespace-nowrap px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wider transition-colors ' + (${#strings.equals(orderBy, 'NEWEST')} ? 'bg-surface-container-highest text-primary' : 'bg-surface-container-low text-on-surface-variant hover:text-on-surface')">Newest</a>
+                        <a th:href="@{?orderBy=views}" th:class="'whitespace-nowrap px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wider transition-colors ' + (${#strings.equals(orderBy, 'VIEWS')} ? 'bg-surface-container-highest text-primary' : 'bg-surface-container-low text-on-surface-variant hover:text-on-surface')">Views</a>
+                        <a th:href="@{?orderBy=pages}" th:class="'whitespace-nowrap px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wider transition-colors ' + (${#strings.equals(orderBy, 'PAGES')} ? 'bg-surface-container-highest text-primary' : 'bg-surface-container-low text-on-surface-variant hover:text-on-surface')">Pages</a>
+                        <a th:href="@{?orderBy=lastViewed}" th:class="'whitespace-nowrap px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wider transition-colors ' + (${#strings.equals(orderBy, 'LASTVIEWED')} ? 'bg-surface-container-highest text-primary' : 'bg-surface-container-low text-on-surface-variant hover:text-on-surface')">Last Viewed</a>
+                        <a th:href="@{?orderBy=oldestViewed}" th:class="'whitespace-nowrap px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wider transition-colors ' + (${#strings.equals(orderBy, 'OLDESTVIEWED')} ? 'bg-surface-container-highest text-primary' : 'bg-surface-container-low text-on-surface-variant hover:text-on-surface')">Oldest Viewed</a>
+                        <a th:href="@{?orderBy=name}" th:class="'whitespace-nowrap px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wider transition-colors ' + (${#strings.equals(orderBy, 'NAME')} ? 'bg-surface-container-highest text-primary' : 'bg-surface-container-low text-on-surface-variant hover:text-on-surface')">Name</a>
+                    </div>
+                </div>
+                <!-- Collection Sorting -->
+                <div>
+                    <p class="text-xs font-bold text-on-surface/60 uppercase tracking-widest mb-2 px-2">Collections</p>
+                    <div class="flex overflow-x-auto gap-3 hide-scrollbar">
+                        <a th:href="@{?collectionOrderBy=name}" th:class="'whitespace-nowrap px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wider transition-colors ' + (${#strings.equals(collectionOrderBy, 'NAME')} ? 'bg-surface-container-highest text-primary' : 'bg-surface-container-low text-on-surface-variant hover:text-on-surface')">Name</a>
+                        <a th:href="@{?collectionOrderBy=views}" th:class="'whitespace-nowrap px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wider transition-colors ' + (${#strings.equals(collectionOrderBy, 'VIEWS')} ? 'bg-surface-container-highest text-primary' : 'bg-surface-container-low text-on-surface-variant hover:text-on-surface')">Views</a>
+                        <a th:href="@{?collectionOrderBy=chapters}" th:class="'whitespace-nowrap px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wider transition-colors ' + (${#strings.equals(collectionOrderBy, 'CHAPTERS')} ? 'bg-surface-container-highest text-primary' : 'bg-surface-container-low text-on-surface-variant hover:text-on-surface')">Chapters</a>
+                        <a th:href="@{?collectionOrderBy=newest}" th:class="'whitespace-nowrap px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wider transition-colors ' + (${#strings.equals(collectionOrderBy, 'NEWEST')} ? 'bg-surface-container-highest text-primary' : 'bg-surface-container-low text-on-surface-variant hover:text-on-surface')">Newest</a>
+                    </div>
                 </div>
             </div>
 
-            <div class="uk-grid-small" uk-grid>
-                <!--<div class="uk-margin-bottom uk-width-3-4@s">
-                    <form class="uk-search uk-search-default">
-                        <span uk-search-icon></span>
-                        <input class="uk-search-input" type="search" placeholder="Search">
-                    </form>
-                </div>-->
-                <div class="uk-margin-bottom uk-width-1-4@s">
-                    <!--<div th:insert="sort-form :: sort-form"></div>-->
+            <!-- Header -->
+            <header class="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-10">
+                <div class="flex items-center gap-4">
+                    <a th:if="${back}" th:href="'/library/' + ${back}" class="p-2 rounded-lg hover:bg-surface-container transition-colors">
+                        <span class="material-symbols-outlined text-on-surface text-xl">arrow_back</span>
+                    </a>
+                    <div>
+                        <h1 class="text-4xl md:text-5xl font-black font-headline tracking-tighter text-on-surface uppercase" th:text="'Library - ' + (${name != null ? name : 'Home'})">Library</h1>
+                        <p class="text-on-surface-variant mt-2 font-medium" th:text="'Total: ' + (${titles.size()} + ${chapters.size()}) + ' entries'"></p>
+                    </div>
                 </div>
-            </div>
-            <div class="uk-child-width-1-4@m uk-child-width-1-2" uk-grid>
-                <div class="item" th:each="item, i : ${titles}">
-                    <div class="uk-card uk-card-default">
-                        <div class="uk-card-media-top uk-inline">
-                            <img th:if="${chapterThumbnails.get(item) != null}" width="100%" height="100%" alt="" uk-img="" th:src="'/thumbnail/' + ${chapterThumbnails.get(item)}">
-                        </div>
-                        <div class="uk-card-body">
-                            <a class="uk-card-title break-word uk-margin-remove-top uk-text-meta uk-display-inline-block no-modal ddd-truncated" th:text="${item.name}" th:href="'/library/' + ${item.id}"></a>
-                        </div>
+            </header>
+
+            <!-- Titles Grid -->
+            <div th:if="${!titleStats.empty}" class="mb-12">
+                <h2 class="font-headline text-xl font-bold tracking-tight mb-4">Collections</h2>
+                <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-x-6 gap-y-10">
+                    <div th:each="titleStat : ${titleStats}" class="group cursor-pointer">
+                        <a th:href="'/library/' + ${titleStat.title.id}" class="block">
+                            <div class="relative aspect-[2/3] rounded-lg overflow-hidden bg-surface-container-low mb-3">
+                                <!-- Show thumbnail if available, fallback to folder icon -->
+                                <img th:if="${chapterThumbnails[titleStat.title.id] != null}" th:src="'/thumbnail/' + ${chapterThumbnails[titleStat.title.id]}" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110">
+                                <div th:if="${chapterThumbnails[titleStat.title.id] == null}" class="w-full h-full bg-gradient-to-br from-primary/10 to-secondary/10 flex items-center justify-center">
+                                    <span class="material-symbols-outlined text-on-surface-variant text-4xl">folder</span>
+                                </div>
+                                <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-4">
+                                    <span class="material-symbols-outlined text-on-surface" style="font-variation-settings: 'FILL' 1;">arrow_forward</span>
+                                </div>
+                            </div>
+                            <h3 class="font-headline font-bold text-on-surface group-hover:text-primary transition-colors line-clamp-2" th:text="${titleStat.title.name}"></h3>
+                            <!-- NEW: Display title metadata -->
+                            <div class="flex items-center gap-3 mt-1 text-xs text-on-surface-variant">
+                                <span class="flex items-center gap-1">
+                                    <span class="material-symbols-outlined text-sm">visibility</span>
+                                    <span th:text="${titleStat.totalViews}"></span>
+                                </span>
+                                <span class="flex items-center gap-1">
+                                    <span class="material-symbols-outlined text-sm">library_books</span>
+                                    <span th:text="${titleStat.chapterCount}"></span>
+                                </span>
+                                <span th:if="${titleStat.newestChapterAge != null}" class="flex items-center gap-1">
+                                    <span class="material-symbols-outlined text-sm">schedule</span>
+                                    <span th:text="${titleStat.newestChapterAge}"></span>
+                                </span>
+                            </div>
+                        </a>
                     </div>
                 </div>
             </div>
-            <h3  th:if="${!chapters.empty}">Chapters</h3>
-            <div th:if="${!chapters.empty}" class="uk-child-width-1-4@m uk-child-width-1-2" uk-grid>
-                <div class="item" th:each="item, i : ${chapters}">
-                    <div class="uk-card uk-card-default">
-                        <div class="uk-card-media-top uk-inline">
-                            <img th:if="${item.thumbnail != null}" width="100%" height="100%" alt="" th:title="${item.description}" uk-img="" th:src="'/thumbnail/' + ${item.id}">
-                        </div>
-                        <div class="uk-card-body">
-                            <a class="uk-card-title break-word uk-margin-remove-top uk-text-meta uk-display-inline-block no-modal ddd-truncated" th:text="${'VIEWS'.equals(orderBy) ? '(' + item.views + ') ' : ''} + ${'PAGES'.equals(orderBy) ? '(' + item.pageCount + ') ' : ''} + ${'LASTVIEWED'.equals(orderBy) ? '(' + (item.lastView == null ? '-' : item.lastView.toString().split('T')[0]) + ') ' : ''} +  ${item.name}" th:href="'/reader/' + ${item.id}"></a>
-                        </div>
+
+            <!-- Chapters Grid -->
+            <div th:if="${!chapters.empty}">
+                <h2 class="font-headline text-xl font-bold tracking-tight mb-4">Entries</h2>
+                <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-x-6 gap-y-10">
+                    <div th:each="item : ${chapters}" class="group cursor-pointer">
+                        <a th:href="'/reader/' + ${item.id}" class="block">
+                            <div class="relative aspect-[2/3] rounded-lg overflow-hidden bg-surface-container-low mb-3">
+                                <img th:if="${item.thumbnail != null}" th:src="'/thumbnail/' + ${item.id}" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110">
+                                <div th:if="${item.thumbnail == null}" class="w-full h-full bg-surface-container flex items-center justify-center">
+                                    <span class="material-symbols-outlined text-on-surface-variant text-4xl">image_not_supported</span>
+                                </div>
+                                <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-4">
+                                    <span class="material-symbols-outlined text-on-surface" style="font-variation-settings: 'FILL' 1;">play_arrow</span>
+                                </div>
+                            </div>
+                            <h3 class="font-headline font-bold text-on-surface group-hover:text-primary transition-colors line-clamp-2" th:text="${item.name}"></h3>
+                            <div class="flex items-center gap-3 mt-1 text-xs text-on-surface-variant">
+                                <span th:if="${item.views != null}" class="flex items-center gap-1">
+                                    <span class="material-symbols-outlined text-sm">visibility</span>
+                                    <span th:text="${item.views}"></span>
+                                </span>
+                                <span th:if="${item.pageCount != null}" class="flex items-center gap-1">
+                                    <span class="material-symbols-outlined text-sm">auto_stories</span>
+                                    <span th:text="${item.pageCount}"></span>
+                                </span>
+                                <span th:if="${item.lastViewFormatted != null}" class="flex items-center gap-1">
+                                    <span class="material-symbols-outlined text-sm">schedule</span>
+                                    <span th:text="${item.lastViewFormatted}"></span>
+                                </span>
+                            </div>
+                        </a>
                     </div>
                 </div>
             </div>
-        </div>
+
+            <!-- Empty State -->
+            <div th:if="${titles.empty and chapters.empty}" class="text-center py-12">
+                <span class="material-symbols-outlined text-on-surface-variant text-6xl mb-4 block">folder_open</span>
+                <h2 class="text-2xl font-headline font-bold text-on-surface mb-2">Library Empty</h2>
+                <p class="text-on-surface-variant">Scan your library to add chapters and collections.</p>
+            </div>
+        </main>
     </div>
 
-    <!-- Include additional scripts 
-    <th:block th:insert="layout :: additional-scripts"></th:block>-->
+    <script th:inline="javascript">
+        setTheme();
+    </script>
 </body>
 </html>

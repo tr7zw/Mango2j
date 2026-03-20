@@ -1,67 +1,66 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org" class="dark">
 <head>
-    <!-- Include the layout's head content -->
     <th:block th:insert="~{head}"></th:block>
 </head>
-<body>
-    <!-- Include the layout's body content -->
+<body class="bg-surface text-on-surface font-body">
     <th:block th:insert="~{layout}"></th:block>
 
-    <!-- Your library content here -->
-    <div class="uk-section uk-section-small" style="position:relative;">
-        <div class="uk-container uk-container-small">
-            <h2 class="uk-title" th:text="(${name != null ? name : 'Home'})"></h2>
-            <a class="uk-text-meta" th:if="${back != null && path != null}" th:text="'Back - ' + ${path}" th:href="'/library/' + ${back}"></a>
-            <p class="uk-text-meta" th:text="${chapters.size()} + ' entries found'"></p>
-			
-            <div class="uk-margin-bottom uk-flex uk-flex-between">
-                <!-- searchbox that gets to value when pressing enter -->
-                <form class="uk-search uk-search-default" th:action="@{/search}" method="get">
-                    <span uk-search-icon></span>
-                    <input class="uk-search-input" type="search" name="query" placeholder="Search" th:value="${query}">
-            </div>
+    <div class="pt-16 px-6 max-w-7xl mx-auto pb-32">
+        <div class="mb-10">
+            <h1 class="text-4xl md:text-5xl font-black font-headline tracking-tighter text-on-surface uppercase mb-6">Search Results</h1>
+            <form th:action="@{/search}" method="get" class="flex gap-4">
+                <div class="flex-grow">
+                    <input class="w-full px-6 py-3 bg-surface-container-low rounded-lg text-on-surface placeholder-on-surface-variant focus:outline-none focus:ring-2 focus:ring-primary/50" type="search" name="query" placeholder="Search manga..." th:value="${query}">
+                </div>
+                <button class="px-6 py-3 bg-gradient-to-r from-primary to-primary-container text-on-primary font-bold rounded-lg hover:shadow-lg hover:shadow-primary/20 transition-all active:scale-95">
+                    <span class="material-symbols-outlined">search</span>
+                </button>
+            </form>
+        </div>
 
-            <div class="uk-grid-small" uk-grid>
-                <!--<div class="uk-margin-bottom uk-width-3-4@s">
-                    <form class="uk-search uk-search-default">
-                        <span uk-search-icon></span>
-                        <input class="uk-search-input" type="search" placeholder="Search">
-                    </form>
-                </div>-->
-                <div class="uk-margin-bottom uk-width-1-4@s">
-                    <!--<div th:insert="sort-form :: sort-form"></div>-->
-                </div>
-            </div>
-            <div class="uk-child-width-1-4@m uk-child-width-1-2" uk-grid>
-                <div class="item" th:each="item, i : ${titles}">
-                    <div class="uk-card uk-card-default">
-                        <div class="uk-card-media-top uk-inline">
-                            <img th:if="${chapterThumbnails.get(item) != null}" width="100%" height="100%" alt="" uk-img="" th:src="'/thumbnail/' + ${chapterThumbnails.get(item)}">
+        <p class="text-on-surface-variant mb-8" th:text="${chapters.size()} + ' results found'"></p>
+
+        <!-- Results Grid -->
+        <div th:if="${!chapters.empty}" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-x-6 gap-y-10">
+            <div th:each="item : ${chapters}" class="group cursor-pointer">
+                <a th:href="'/reader/' + ${item.id}" class="block">
+                    <div class="relative aspect-[2/3] rounded-lg overflow-hidden bg-surface-container-low mb-3">
+                        <img th:if="${item.thumbnail != null}" th:src="'/thumbnail/' + ${item.id}" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110">
+                        <div th:if="${item.thumbnail == null}" class="w-full h-full bg-surface-container flex items-center justify-center">
+                            <span class="material-symbols-outlined text-on-surface-variant text-4xl">image_not_supported</span>
                         </div>
-                        <div class="uk-card-body">
-                            <a class="uk-card-title break-word uk-margin-remove-top uk-text-meta uk-display-inline-block no-modal ddd-truncated" th:text="${item.name}" th:href="'/library/' + ${item.id}"></a>
+                        <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-4">
+                            <span class="material-symbols-outlined text-on-surface" style="font-variation-settings: 'FILL' 1;">play_arrow</span>
                         </div>
                     </div>
-                </div>
-            </div>
-            <h3  th:if="${!chapters.empty}">Chapters</h3>
-            <div th:if="${!chapters.empty}" class="uk-child-width-1-4@m uk-child-width-1-2" uk-grid>
-                <div class="item" th:each="item, i : ${chapters}">
-                    <div class="uk-card uk-card-default">
-                        <div class="uk-card-media-top uk-inline">
-                            <img th:if="${item.thumbnail != null}" width="100%" height="100%" alt="" th:title="${item.description}" uk-img="" th:src="'/thumbnail/' + ${item.id}">
-                        </div>
-                        <div class="uk-card-body">
-                            <a class="uk-card-title break-word uk-margin-remove-top uk-text-meta uk-display-inline-block no-modal ddd-truncated" th:text="${'VIEWS'.equals(orderBy) ? '(' + item.views + ') ' : ''} + ${'PAGES'.equals(orderBy) ? '(' + item.pageCount + ') ' : ''} + ${'LASTVIEWED'.equals(orderBy) ? '(' + (item.lastView == null ? '-' : item.lastView.toString().split('T')[0]) + ') ' : ''} +  ${item.name}" th:href="'/reader/' + ${item.id}"></a>
-                        </div>
+                    <h3 class="font-headline font-bold text-on-surface group-hover:text-primary transition-colors line-clamp-2" th:text="${item.name}"></h3>
+                    <div class="flex items-center gap-3 mt-1 text-xs text-on-surface-variant">
+                        <span th:if="${item.views != null}" class="flex items-center gap-1">
+                            <span class="material-symbols-outlined text-sm">visibility</span>
+                            <span th:text="${item.views}"></span>
+                        </span>
+                        <span th:if="${item.pageCount != null}" class="flex items-center gap-1">
+                            <span class="material-symbols-outlined text-sm">auto_stories</span>
+                            <span th:text="${item.pageCount}"></span>
+                        </span>
+                        <span th:if="${item.lastViewFormatted != null}" class="flex items-center gap-1">
+                            <span class="material-symbols-outlined text-sm">schedule</span>
+                            <span th:text="${item.lastViewFormatted}"></span>
+                        </span>
                     </div>
-                </div>
+                </a>
             </div>
+        </div>
+
+        <div th:if="${chapters.empty}" class="text-center py-12">
+            <span class="material-symbols-outlined text-on-surface-variant text-6xl mb-4 block">search_off</span>
+            <p class="text-on-surface-variant text-lg">No results found</p>
         </div>
     </div>
 
-    <!-- Include additional scripts 
-    <th:block th:insert="layout :: additional-scripts"></th:block>-->
+    <script th:inline="javascript">
+        setTheme();
+    </script>
 </body>
 </html>

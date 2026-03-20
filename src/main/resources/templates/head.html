@@ -1,13 +1,92 @@
-
     <meta charset="utf-8">
     <meta name="X-UA-Compatible" content="IE=edge">
-    <title>Mango</title>
+    <title th:text="(${page} != null ? ${page} + ' | ' : '') + 'Mango'">Mango</title>
     <meta name="description" content="Mango - Manga Server and Web Reader">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="stylesheet" th:href="@{'/css/mango.css'}" />
     <link rel="icon" th:href="@{'/favicon.ico'}">
     <link rel="manifest" th:href="@{'/manifest.json'}">
 
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300..700&family=Manrope:wght@200..800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+
+    <!-- Tailwind Configuration -->
+    <script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "error-container": "#a70138",
+              "outline": "#767579",
+              "surface-container-highest": "#25252a",
+              "on-surface": "#f0edf1",
+              "error": "#ff6e84",
+              "on-primary-container": "#280072",
+              "tertiary-fixed-dim": "#f57ca5",
+              "inverse-on-surface": "#555458",
+              "inverse-surface": "#fcf8fd",
+              "tertiary-dim": "#ef77a0",
+              "surface-variant": "#25252a",
+              "on-error-container": "#ffb2b9",
+              "surface": "#0e0e11",
+              "primary-fixed": "#a98fff",
+              "outline-variant": "#48474b",
+              "tertiary": "#ff97b8",
+              "surface-dim": "#0e0e11",
+              "on-error": "#490013",
+              "on-tertiary-container": "#59002b",
+              "surface-bright": "#2c2c30",
+              "secondary-fixed-dim": "#00d7f0",
+              "surface-container-lowest": "#000000",
+              "on-primary": "#340090",
+              "on-surface-variant": "#acaaae",
+              "background": "#0e0e11",
+              "primary-container": "#a98fff",
+              "on-primary-fixed-variant": "#32008a",
+              "on-secondary-fixed": "#003a42",
+              "on-tertiary": "#6a0936",
+              "secondary-container": "#006875",
+              "tertiary-container": "#fc81ab",
+              "tertiary-fixed": "#ff8db2",
+              "on-tertiary-fixed-variant": "#70103b",
+              "on-tertiary-fixed": "#380019",
+              "secondary-dim": "#00d4ec",
+              "on-background": "#f0edf1",
+              "error-dim": "#d73357",
+              "primary-dim": "#7e51ff",
+              "on-primary-fixed": "#000000",
+              "surface-container": "#19191d",
+              "secondary": "#00e3fd",
+              "primary-fixed-dim": "#9c7eff",
+              "inverse-primary": "#6834eb",
+              "surface-container-high": "#1f1f23",
+              "on-secondary-fixed-variant": "#005964",
+              "surface-container-low": "#131316",
+              "on-secondary-container": "#e8fbff",
+              "surface-tint": "#b6a0ff",
+              "primary": "#b6a0ff",
+              "secondary-fixed": "#26e6ff",
+              "on-secondary": "#004d57"
+            },
+            fontFamily: {
+              "headline": ["Space Grotesk"],
+              "body": ["Manrope"],
+              "label": ["Manrope"]
+            },
+            borderRadius: {"DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem"},
+          },
+        },
+      }
+    </script>
+
+    <!-- Mango CSS -->
+    <link rel="stylesheet" th:href="@{'/css/mango.css'}" />
+
+    <!-- Polyfills & Libraries -->
     <script src="https://polyfill.io/v3/polyfill.min.js?features=MutationObserver%2Cdefault%2CmatchMedia&flats=gated"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
     <script type="module" src="https://cdn.jsdelivr.net/gh/alpinejs/alpine@v2.8.0/dist/alpine.min.js"></script>

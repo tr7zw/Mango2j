@@ -1,25 +1,18 @@
 package dev.tr7zw.mango2j.controller;
 
-import java.io.File;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-
-import org.springframework.beans.factory.annotation.Autowired;
+import dev.tr7zw.mango2j.*;
+import dev.tr7zw.mango2j.db.*;
+import dev.tr7zw.mango2j.util.*;
+import org.springframework.beans.factory.annotation.*;
 import org.springframework.data.domain.*;
-import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.stereotype.*;
+import org.springframework.ui.*;
+import org.springframework.web.bind.annotation.*;
 
-import dev.tr7zw.mango2j.Settings;
-import dev.tr7zw.mango2j.db.Chapter;
-import dev.tr7zw.mango2j.db.ChapterRepository;
-import dev.tr7zw.mango2j.db.Title;
-import dev.tr7zw.mango2j.db.TitleRepository;
+import java.io.*;
+import java.time.*;
+import java.util.*;
+import java.util.stream.*;
 
 @Controller
 public class LibraryController {
@@ -30,131 +23,269 @@ public class LibraryController {
     private ChapterRepository chapterRepo;
     @Autowired
     private Settings settings;
+    @Autowired
+    private StatusUtil statusUtil;
+
+    private record TitleStats(
+            Title title,
+            Integer totalViews,
+            Integer chapterCount,
+            String newestChapterAge,
+            Instant newestChapterTime
+    ) {
+    }
+
+    // todo: Job that pre-calculates these stats and stores it in the Title entity?
+    private TitleStats calculateTitleStats(Title title) {
+        int totalViews = 0;
+        int chapterCount = 0;
+        Instant newestTime = null;
+
+        // Get direct chapters for this title
+        List<Chapter> directChapters = chapterRepo.findByPath(title.getFullPath());
+        totalViews = directChapters.stream()
+                .mapToInt(c -> c.getViews() == null ? 0 : c.getViews())
+                .sum();
+        chapterCount = directChapters.size();
+
+        // Find newest timestamp from direct chapters
+        Optional<Instant> newestDirectTime = directChapters.stream()
+                .map(Chapter::getLastView)
+                .filter(Objects::nonNull)
+                .max(Instant::compareTo);
+
+        // Recursively get child titles' statistics
+        List<Title> childTitles = titleRepo.findByPath(title.getFullPath());
+        for (Title child : childTitles) {
+            TitleStats childStats = calculateTitleStats(child);
+            totalViews += childStats.totalViews;
+            chapterCount += childStats.chapterCount;
+
+            // Update newest time if child has a newer one
+            if (childStats.newestChapterTime != null) {
+                if (newestTime == null || childStats.newestChapterTime.isAfter(newestTime)) {
+                    newestTime = childStats.newestChapterTime;
+                }
+            }
+        }
+
+        // Use newest from direct chapters if it's newer than what we found in children
+        if (newestDirectTime.isPresent()) {
+            if (newestTime == null || newestDirectTime.get().isAfter(newestTime)) {
+                newestTime = newestDirectTime.get();
+            }
+        }
+
+        String newestChapterAge = DateFormatUtil.formatTimeAgo(newestTime);
+        return new TitleStats(title, totalViews, chapterCount, newestChapterAge, newestTime);
+    }
+
+    private List<TitleStats> sortTitles(List<Title> titles, String orderBy) {
+        List<TitleStats> statsForAllTitles = titles.stream()
+                .map(this::calculateTitleStats)
+                .collect(Collectors.toList());
+
+        switch (orderBy.toUpperCase()) {
+            case "VIEWS":
+                statsForAllTitles.sort((a, b) ->
+                        Integer.compare(b.totalViews, a.totalViews));
+                break;
+            case "CHAPTERS":
+                statsForAllTitles.sort((a, b) ->
+                        Integer.compare(b.chapterCount, a.chapterCount));
+                break;
+            case "NEWEST":
+                statsForAllTitles.sort((a, b) -> {
+                    if (a.newestChapterTime == null && b.newestChapterTime == null) return 0;
+                    if (a.newestChapterTime == null) return 1;
+                    if (b.newestChapterTime == null) return -1;
+                    return b.newestChapterTime.compareTo(a.newestChapterTime);
+                });
+                break;
+            case "NAME":
+            default:
+                statsForAllTitles.sort((a, b) ->
+                        a.title.getName().compareToIgnoreCase(b.title.getName()));
+                break;
+        }
+
+        return statsForAllTitles;
+    }
 
     @GetMapping("/")
     public String index(Model model) {
-        // Add necessary attributes to the model
-        model.addAttribute("is_admin", true); // Example attribute, replace with your logic
+        model.addAttribute("scanStatus", statusUtil.getScanStatus());
         List<Chapter> chapters = chapterRepo.findTop100ByOrderByIdDesc();
         chapters.sort((a, b) -> Integer.compare(b.getId(), a.getId())); // newest to oldest
         model.addAttribute("chapters", chapters);
-        model.addAttribute("titles", new ArrayList<>());
+        model.addAttribute("totalChapters", chapterRepo.count());
+
+        // Sort collections by views (most viewed first) for home page
+        List<Title> titles = titleRepo.findByPath(settings.getBaseDir().getPath());
+        List<TitleStats> titleStats = sortTitles(titles, "VIEWS");
+        model.addAttribute("titleStats", titleStats);
+
+        // Keep original titles for thumbnail generation
+        model.addAttribute("titles", titles);
+        model.addAttribute("chapterThumbnails", generateThumbnails(titles));
+
         model.addAttribute("name", "Latest");
-        //model.addAttribute("chapterThumbnails", generateThumbnails(titles));
         // Return the name of the Thymeleaf template without the extension
-        return "library";
+        return "home";
     }
 
     @GetMapping("/library")
-    public String home(Model model) {
-        // Add necessary attributes to the model
-        model.addAttribute("is_admin", true); // Example attribute, replace with your logic
+    public String home(Model model,
+                       @RequestParam(name = "collectionOrderBy", defaultValue = "VIEWS") String collectionOrderBy,
+                       @RequestParam(name = "orderBy", defaultValue = "NEWEST") String orderBy) {
+        model.addAttribute("scanStatus", statusUtil.getScanStatus());
+        model.addAttribute("collectionOrderBy", collectionOrderBy.toUpperCase());
+        model.addAttribute("orderBy", orderBy.toUpperCase());
+
         List<Title> titles = titleRepo.findByPath(settings.getBaseDir().getPath());
-        titles.sort((a, b) -> a.getName().compareToIgnoreCase(b.getName()));
+        List<TitleStats> titleStats = sortTitles(titles, collectionOrderBy);
+        model.addAttribute("titleStats", titleStats);
+
+        List<Chapter> chapters = chapterRepo.findByPath(settings.getBaseDir().getPath());
+        switch (orderBy.toUpperCase()) {
+            case "NAME":
+                chapters.sort((a, b) -> a.getName().compareToIgnoreCase(b.getName()));
+                break;
+            case "VIEWS":
+                chapters.sort((a, b) -> Integer.compare(b.getViews() == null ? 0 : b.getViews(),
+                        a.getViews() == null ? 0 : a.getViews()));
+                break;
+            case "PAGES":
+                chapters.sort((a, b) -> Integer.compare(b.getPageCount() == null ? 0 : b.getPageCount(),
+                        a.getPageCount() == null ? 0 : a.getPageCount()));
+                break;
+            case "LASTVIEWED":
+                chapters.sort((a, b) -> {
+                    if (a.getLastView() == null && b.getLastView() == null)
+                        return 0;
+                    if (a.getLastView() == null)
+                        return 1;
+                    if (b.getLastView() == null)
+                        return -1;
+                    return b.getLastView().compareTo(a.getLastView());
+                });
+                break;
+            case "OLDESTVIEWED":
+                chapters.sort((a, b) -> {
+                    if (a.getLastView() == null && b.getLastView() == null)
+                        return 0;
+                    if (a.getLastView() == null)
+                        return -1;
+                    if (b.getLastView() == null)
+                        return 1;
+                    return a.getLastView().compareTo(b.getLastView());
+                });
+                break;
+            default:
+                chapters.sort((a, b) -> Integer.compare(b.getId(), a.getId()));
+                break;
+        }
+        model.addAttribute("chapters", chapters);
         model.addAttribute("titles", titles);
-        model.addAttribute("chapters", new ArrayList<>());
         model.addAttribute("chapterThumbnails", generateThumbnails(titles));
 
-        // Return the name of the Thymeleaf template without the extension
         return "library";
     }
 
     @GetMapping("/library/{id}")
     public String libraryDir(@PathVariable Integer id,
-            @RequestParam(name = "orderBy", defaultValue = "NEWEST") String orderBy, Model model) {
-        // Add necessary attributes to the model
+                             @RequestParam(name = "collectionOrderBy", defaultValue = "VIEWS") String collectionOrderBy,
+                             @RequestParam(name = "orderBy", defaultValue = "NEWEST") String orderBy, Model model) {
         Title title = titleRepo.getReferenceById(id);
         Title parent = titleRepo.findByFullPath(new File(title.getFullPath()).getParent());
         if (parent != null) {
             model.addAttribute("back", parent.getId());
         }
-        model.addAttribute("is_admin", true); // Example attribute, replace with your logic
+        model.addAttribute("scanStatus", statusUtil.getScanStatus());
+        model.addAttribute("collectionOrderBy", collectionOrderBy.toUpperCase());
+        model.addAttribute("orderBy", orderBy.toUpperCase());
+
         List<Title> titles = titleRepo.findByPath(title.getFullPath());
-        titles.sort((a, b) -> a.getName().compareToIgnoreCase(b.getName()));
-        model.addAttribute("titles", titles);
+        List<TitleStats> titleStats = sortTitles(titles, collectionOrderBy);
+        model.addAttribute("titleStats", titleStats);
+
         List<Chapter> chapters = chapterRepo.findByPath(title.getFullPath());
         switch (orderBy.toUpperCase()) {
-        case "NAME":
-            chapters.sort((a, b) -> a.getName().compareToIgnoreCase(b.getName()));
-            break;
-        case "VIEWS":
-            chapters.sort((a, b) -> Integer.compare(b.getViews() == null ? 0 : b.getViews(),
-                    a.getViews() == null ? 0 : a.getViews()));
-            break;
-        case "PAGES":
-            chapters.sort((a, b) -> Integer.compare(b.getPageCount() == null ? 0 : b.getPageCount(),
-                    a.getPageCount() == null ? 0 : a.getPageCount()));
-            break;
-        case "LASTVIEWED":
-            chapters.sort((a, b) -> {
-                if (a.getLastView() == null && b.getLastView() == null)
-                    return 0;
-                if (a.getLastView() == null)
-                    return 1;
-                if (b.getLastView() == null)
-                    return -1;
-                return b.getLastView().compareTo(a.getLastView());
-            });
-            break;
-        default:
-            chapters.sort((a, b) -> Integer.compare(b.getId(), a.getId())); // newest to oldest
-            break;
+            case "NAME":
+                chapters.sort((a, b) -> a.getName().compareToIgnoreCase(b.getName()));
+                break;
+            case "VIEWS":
+                chapters.sort((a, b) -> Integer.compare(b.getViews() == null ? 0 : b.getViews(),
+                        a.getViews() == null ? 0 : a.getViews()));
+                break;
+            case "PAGES":
+                chapters.sort((a, b) -> Integer.compare(b.getPageCount() == null ? 0 : b.getPageCount(),
+                        a.getPageCount() == null ? 0 : a.getPageCount()));
+                break;
+            case "LASTVIEWED":
+                chapters.sort((a, b) -> {
+                    if (a.getLastView() == null && b.getLastView() == null)
+                        return 0;
+                    if (a.getLastView() == null)
+                        return 1;
+                    if (b.getLastView() == null)
+                        return -1;
+                    return b.getLastView().compareTo(a.getLastView());
+                });
+                break;
+            case "OLDESTVIEWED":
+                chapters.sort((a, b) -> {
+                    if (a.getLastView() == null && b.getLastView() == null)
+                        return 0;
+                    if (a.getLastView() == null)
+                        return -1;
+                    if (b.getLastView() == null)
+                        return 1;
+                    return a.getLastView().compareTo(b.getLastView());
+                });
+                break;
+            default:
+                chapters.sort((a, b) -> Integer.compare(b.getId(), a.getId())); // newest to oldest
+                break;
         }
         model.addAttribute("chapters", chapters);
+        model.addAttribute("titles", titles);
         model.addAttribute("name", title.getName());
         model.addAttribute("path", title.getPath());
-        model.addAttribute("orderBy", orderBy.toUpperCase());
         model.addAttribute("chapterThumbnails", generateThumbnails(titles));
         // Return the name of the Thymeleaf template without the extension
         return "library";
     }
 
-    @GetMapping("/empty")
-    public String empty(Model model) {
-        // Add necessary attributes to the model
-        model.addAttribute("is_admin", true); // Example attribute, replace with your logic
-        List<Chapter> chapters = chapterRepo.findEmptyDownloads();
-        model.addAttribute("chapters", chapters);
-        model.addAttribute("titles", new ArrayList<>());
-        model.addAttribute("name", "Empty");
-        //model.addAttribute("chapterThumbnails", generateThumbnails(titles));
-        // Return the name of the Thymeleaf template without the extension
-        return "empty";
-    }
-
     @GetMapping("/top")
     public String top(Model model) {
-        // Add necessary attributes to the model
-        model.addAttribute("is_admin", true); // Example attribute, replace with your logic
+        model.addAttribute("scanStatus", statusUtil.getScanStatus());
         List<Chapter> chapters = chapterRepo.findTop100ByOrderByViewsDesc();
         model.addAttribute("chapters", chapters);
         model.addAttribute("titles", new ArrayList<>());
         model.addAttribute("name", "Top Viewed");
-        //model.addAttribute("chapterThumbnails", generateThumbnails(titles));
         // Return the name of the Thymeleaf template without the extension
         return "viewcount";
     }
 
     @GetMapping("/bottom")
     public String bottom(Model model) {
-        // Add necessary attributes to the model
-        model.addAttribute("is_admin", true); // Example attribute, replace with your logic
+        model.addAttribute("scanStatus", statusUtil.getScanStatus());
         List<Chapter> chapters = chapterRepo.findTop100ByOrderByViewsAscIdDesc();
         model.addAttribute("chapters", chapters);
         model.addAttribute("titles", new ArrayList<>());
         model.addAttribute("name", "Least Viewed");
-        //model.addAttribute("chapterThumbnails", generateThumbnails(titles));
         // Return the name of the Thymeleaf template without the extension
         return "viewcount";
     }
-    
+
     @GetMapping("/search")
     public String search(@RequestParam(name = "query", required = false) String query, Model model) {
         List<Chapter> chapters = new ArrayList<>();
-        if(query != null && !query.isBlank()) {
+        if (query != null && !query.isBlank()) {
             chapters = chapterRepo.findAll(ChapterRepository.descriptionMatches(query));
             model.addAttribute("name", "Search results for: " + query);
-            if(chapters.isEmpty()) {
+            if (chapters.isEmpty()) {
                 Page<Chapter> result = chapterRepo.findAll(ChapterRepository.descriptionRankedSearch(query), PageRequest.of(0, 20));
                 chapters = result.getContent();
                 model.addAttribute("name", "Closest search results for: " + query);
@@ -163,19 +294,17 @@ public class LibraryController {
         } else {
             model.addAttribute("name", "Search");
         }
-        // Add necessary attributes to the model
-        model.addAttribute("is_admin", true); // Example attribute, replace with your logic
+        model.addAttribute("scanStatus", statusUtil.getScanStatus());
         model.addAttribute("chapters", chapters);
         model.addAttribute("query", query);
         model.addAttribute("titles", new ArrayList<>());
-        //model.addAttribute("chapterThumbnails", generateThumbnails(titles));
         // Return the name of the Thymeleaf template without the extension
         return "search";
     }
 
-    private Map<Title, Integer> generateThumbnails(List<Title> titles) {
-        Map<Title, Integer> map = new HashMap<>();
-        titles.forEach(t -> map.put(t, findThumbnail(t)));
+    private Map<Integer, Integer> generateThumbnails(List<Title> titles) {
+        Map<Integer, Integer> map = new HashMap<>();
+        titles.forEach(t -> map.put(t.getId(), findThumbnail(t)));
         return map;
     }
 
