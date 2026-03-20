@@ -42,6 +42,8 @@ public class FileScanner implements DisposableBean {
     private ChapterAnalyser chapterAnalyser;
     @Autowired
     private ImageCounter imageCounter;
+    @Autowired
+    private TitleAnalyser titleAnalyser;
     private final Lock lock = new ReentrantLock();
     @Getter
     private boolean isRunning = false;
@@ -89,6 +91,7 @@ public class FileScanner implements DisposableBean {
             thumbnailGenerator.executeLongRunningTask();
             imageCounter.executeLongRunningTask();
             chapterAnalyser.executeLongRunningTask();
+            titleAnalyser.executeLongRunningTask();
         }
     }
 
