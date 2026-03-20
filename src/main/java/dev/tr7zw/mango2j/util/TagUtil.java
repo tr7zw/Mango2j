@@ -15,9 +15,9 @@ public class TagUtil {
         Set<String> stopWords = Set.of(
                 "the", "a", "an", "is", "are", "of", "for", "to", "and", "or",
                 "in", "on", "at", "from", "by", "as", "about", "check", "my",
-                "more", "content", "http", "https", "www", "com", "org", "net",
-                "with", "that", "this", "it", "be", "have", "do", "not", "can",
-                "will", "would", "could", "should", "may", "might", "must", "shall",
+                "more", "content", "http", "https", "www", "com", "org", "net", "full", "posts", "here",
+                "with", "that", "this", "it", "be", "have", "do", "not", "can", "want", "you", "jump", "also",
+                "will", "would", "could", "should", "may", "might", "must", "shall", "enjoy", "hope", "into", "one",
                 "zip", "rar", "7z", "pdf", "epub", "mobi", "cbz", "cbr", "php", "js", "css", "html", "xml", "json", "txt", "md",
                 "jpg", "jpeg", "png", "gif", "bmp", "webp", "svg", "mp4", "mkv", "avi", "mp3", "flac", "wav", "ogg",
                 "patreon", "gumroad", "ko-fi", "paypal", "buymeacoffee", "discord", "twitter", "facebook", "instagram", "linkedin",
