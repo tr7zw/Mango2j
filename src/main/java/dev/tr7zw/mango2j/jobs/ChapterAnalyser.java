@@ -59,8 +59,7 @@ public class ChapterAnalyser implements DisposableBean {
         for (Chapter chapter : chapterRepo.findAll()) {
             if (cancel)
                 return;
-            try {
-                ChapterWrapper wrapper = fileService.getChapterWrapper(new File(chapter.getFullPath()).toPath());
+            try (ChapterWrapper wrapper = fileService.getChapterWrapper(new File(chapter.getFullPath()).toPath())) {
                 Title title = titleRepo.findByFullPath(chapter.getPath());
                 String metadata = title.getName() + ", " + chapter.getName();
                 if (wrapper.hasFile("description.txt")) {

@@ -60,8 +60,7 @@ public class ImageCounter implements DisposableBean {
         for (Chapter chapter : chapterRepo.findAll()) {
             if (cancel)
                 return;
-            try {
-                ChapterWrapper chapterWrapper = fileService.getChapterWrapper(new File(chapter.getFullPath()).toPath());
+            try (ChapterWrapper chapterWrapper = fileService.getChapterWrapper(new File(chapter.getFullPath()).toPath())) {
                 Integer size = chapterWrapper.getFilesTyped().size();
                 Integer old = chapter.getPageCount();
                 if (!Objects.equals(size, old) || chapter.getViews() == null) {

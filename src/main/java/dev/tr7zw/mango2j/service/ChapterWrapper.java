@@ -6,7 +6,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
 
-public interface ChapterWrapper {
+public interface ChapterWrapper extends AutoCloseable {
 
     List<Entry> getFilesTyped();
     int getFiles();

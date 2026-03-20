@@ -77,8 +77,7 @@ public class ThumbnailGenerator implements DisposableBean {
         for (Chapter chapter : chapterList) {
             if (cancel)
                 return;
-            try {
-                ChapterWrapper chapterWrapper = fileService.getChapterWrapper(new File(chapter.getFullPath()).toPath());
+            try (ChapterWrapper chapterWrapper = fileService.getChapterWrapper(new File(chapter.getFullPath()).toPath())) {
                 int id = 0;
                 for(int i = 0; i < chapterWrapper.getFiles() && i < 10; i++) {
                     if (!chapterWrapper.getFileType(i).startsWith("txt")) {

@@ -40,8 +40,13 @@ public class ReaderController {
         chapter.setLastView(Instant.now());
         chapterRepo.save(chapter);
         Title title = titleRepo.findByFullPath(chapter.getPath());
-        ChapterWrapper chapterWrapper = fileService.getChapterWrapper(new File(chapter.getFullPath()).toPath());
-        model.addAttribute("items", chapterWrapper.getFilesTyped());
+        try (ChapterWrapper chapterWrapper = fileService.getChapterWrapper(new File(chapter.getFullPath()).toPath())) {
+            model.addAttribute("items", chapterWrapper.getFilesTyped());
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
         model.addAttribute("titleid", "123");
         model.addAttribute("entryid", id);
         model.addAttribute("page_idx", 0);
