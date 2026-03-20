@@ -54,11 +54,26 @@ public class AdminController {
         // round to 2 decimal places
         avgViewsPerChapter = Math.round(avgViewsPerChapter * 100.0) / 100.0;
 
+        // File size statistics
+        long totalFileSize = allChapters.stream()
+                .mapToLong(c -> c.getFileSize() != null ? c.getFileSize() : 0)
+                .sum();
+
+        long maxFileSize = allChapters.stream()
+                .mapToLong(c -> c.getFileSize() != null ? c.getFileSize() : 0)
+                .max()
+                .orElse(0);
+
+        double avgFileSize = allChapters.isEmpty() ? 0 : (double) totalFileSize / allChapters.size();
+
         model.addAttribute("totalTitles", allTitles.size());
         model.addAttribute("totalChapters", allChapters.size());
         model.addAttribute("totalViews", totalViews);
         model.addAttribute("chaptersWithoutThumbnails", chaptersWithoutThumbnails);
         model.addAttribute("avgViewsPerChapter", avgViewsPerChapter);
+        model.addAttribute("totalFileSize", FormatUtil.formatFileSize(totalFileSize));
+        model.addAttribute("maxFileSize", FormatUtil.formatFileSize(maxFileSize));
+        model.addAttribute("avgFileSize", FormatUtil.formatFileSize((long) avgFileSize));
         model.addAttribute("mostViewedChapter", allChapters.stream().max(Comparator.comparingInt(a -> a.getViews() != null ? a.getViews() : 0)).orElse(null));
         model.addAttribute("leastViewedChapter", allChapters.stream().filter(c -> c.getViews() != null && c.getViews() > 0).min(Comparator.comparingInt(a -> a.getViews() != null ? a.getViews() : 0)).orElse(null));
 
