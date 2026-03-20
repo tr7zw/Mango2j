@@ -248,6 +248,8 @@ public class LibraryController {
     @GetMapping("/search")
     public String search(@RequestParam(name = "query", required = false) String query, Model model) {
         List<Chapter> chapters = new ArrayList<>();
+        Map<String, Integer> suggestedTags = new LinkedHashMap<>();
+
         if (query != null && !query.isBlank()) {
             chapters = chapterRepo.findAll(ChapterRepository.descriptionMatches(query));
             model.addAttribute("name", "Search results for: " + query);
@@ -257,12 +259,37 @@ public class LibraryController {
                 model.addAttribute("name", "Closest search results for: " + query);
             }
 
+            // Extract and suggest tags from search results
+            if (!chapters.isEmpty()) {
+                suggestedTags = TagUtil.calculateTagFrequency(
+                    chapters,
+                    c -> ((Chapter) c).getDescription()
+                );
+
+                // Get already-searched tokens (case-insensitive)
+                Set<String> searchedTokens = Arrays.stream(query.toLowerCase().split("[,\\s]+"))
+                    .filter(token -> !token.isBlank())
+                    .collect(Collectors.toSet());
+
+                // Limit to top 15 tags and exclude already-searched tokens
+                suggestedTags = suggestedTags.entrySet().stream()
+                    .filter(entry -> !searchedTokens.contains(entry.getKey()))
+                    .limit(15)
+                    .collect(Collectors.toMap(
+                        Map.Entry::getKey,
+                        Map.Entry::getValue,
+                        (a, b) -> a,
+                        LinkedHashMap::new
+                    ));
+            }
+
         } else {
             model.addAttribute("name", "Search");
         }
         model.addAttribute("scanStatus", statusUtil.getScanStatus());
         model.addAttribute("chapters", chapters);
         model.addAttribute("query", query);
+        model.addAttribute("suggestedTags", suggestedTags);
         model.addAttribute("titles", new ArrayList<>());
         // Return the name of the Thymeleaf template without the extension
         return "search";
