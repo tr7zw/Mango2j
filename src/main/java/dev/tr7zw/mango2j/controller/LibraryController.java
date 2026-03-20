@@ -37,44 +37,9 @@ public class LibraryController {
 
     // todo: Job that pre-calculates these stats and stores it in the Title entity?
     private TitleStats calculateTitleStats(Title title) {
-        int totalViews = 0;
-        int chapterCount = 0;
-        Instant newestTime = null;
-
-        // Get direct chapters for this title
-        List<Chapter> directChapters = chapterRepo.findByPath(title.getFullPath());
-        totalViews = directChapters.stream()
-                .mapToInt(c -> c.getViews() == null ? 0 : c.getViews())
-                .sum();
-        chapterCount = directChapters.size();
-
-        // Find newest timestamp from direct chapters
-        Optional<Instant> newestDirectTime = directChapters.stream()
-                .map(Chapter::getLastView)
-                .filter(Objects::nonNull)
-                .max(Instant::compareTo);
-
-        // Recursively get child titles' statistics
-        List<Title> childTitles = titleRepo.findByPath(title.getFullPath());
-        for (Title child : childTitles) {
-            TitleStats childStats = calculateTitleStats(child);
-            totalViews += childStats.totalViews;
-            chapterCount += childStats.chapterCount;
-
-            // Update newest time if child has a newer one
-            if (childStats.newestChapterTime != null) {
-                if (newestTime == null || childStats.newestChapterTime.isAfter(newestTime)) {
-                    newestTime = childStats.newestChapterTime;
-                }
-            }
-        }
-
-        // Use newest from direct chapters if it's newer than what we found in children
-        if (newestDirectTime.isPresent()) {
-            if (newestTime == null || newestDirectTime.get().isAfter(newestTime)) {
-                newestTime = newestDirectTime.get();
-            }
-        }
+        int totalViews = title.getTotalViews() == null ? 0 : title.getTotalViews();
+        int chapterCount = title.getChapterCount() == null ? 0 : title.getChapterCount();
+        Instant newestTime = title.getNewestChapterTime();
 
         String newestChapterAge = DateFormatUtil.formatTimeAgo(newestTime);
         return new TitleStats(title, totalViews, chapterCount, newestChapterAge, newestTime);

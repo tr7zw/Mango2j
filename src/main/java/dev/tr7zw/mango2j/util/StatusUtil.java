@@ -15,6 +15,8 @@ public class StatusUtil {
     private ChapterAnalyser chapterAnalyser;
     @Autowired
     private ImageCounter imageCounter;
+    @Autowired
+    private TitleAnalyser titleAnalyser;
 
     public String getScanStatus() {
         if (fileScanner.isRunning()) {
@@ -25,6 +27,8 @@ public class StatusUtil {
             return "Analysing Chapters...";
         } else if (imageCounter.isRunning()) {
             return "Counting Images...";
+        } else if (titleAnalyser.isRunning()) {
+            return "Analysing Titles...";
         } else {
             return "Idle";
         }

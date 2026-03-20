@@ -2,6 +2,7 @@ package dev.tr7zw.mango2j.db;
 
 import jakarta.persistence.*;
 import lombok.*;
+import java.time.Instant;
 
 @RequiredArgsConstructor
 @NoArgsConstructor
@@ -25,5 +26,17 @@ public class Title {
     @NonNull
     @Getter
     private String name;
+
+    @Getter
+    @Setter
+    private Integer totalViews = 0;
+
+    @Getter
+    @Setter
+    private Integer chapterCount = 0;
+
+    @Getter
+    @Setter
+    private Instant newestChapterTime;
 
 }
