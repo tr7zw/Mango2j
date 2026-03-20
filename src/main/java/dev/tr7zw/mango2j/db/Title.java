@@ -1,15 +1,7 @@
 package dev.tr7zw.mango2j.db;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
+import jakarta.persistence.*;
+import lombok.*;
 
 @RequiredArgsConstructor
 @NoArgsConstructor
@@ -25,13 +17,13 @@ public class Title {
     @Getter
     @Column(unique = true, length = 1024)
     private String fullPath;
-    
+
     @NonNull
     @Getter
     private String path;
-    
+
     @NonNull
     @Getter
     private String name;
-    
+
 }

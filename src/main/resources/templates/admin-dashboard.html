@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" class="dark">
+<head>
+    <th:block th:insert="~{head}"></th:block>
+</head>
+<body class="bg-surface text-on-surface font-body selection:bg-primary/30 selection:text-primary">
+    <th:block th:insert="~{navbar-top}"></th:block>
+
+    <div class="content pt-16">
+        <!-- Page Content -->
+        <div class="pt-8 px-6 pb-12">
+            <div class="max-w-6xl mx-auto">
+                <!-- Page Header -->
+                <div class="mb-8">
+                    <h1 class="text-4xl font-black text-on-surface font-headline mb-2">Admin Dashboard</h1>
+                    <p class="text-on-surface/60">System statistics and monitoring</p>
+                </div>
+
+                <!-- Stats Grid -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
+                    <!-- Total Titles -->
+                    <div class="bg-surface-container rounded-2xl p-6 shadow-sm">
+                        <div class="flex items-center justify-between mb-4">
+                            <span class="text-sm font-headline font-bold text-on-surface/60 uppercase tracking-widest">Total Titles</span>
+                            <span class="material-symbols-outlined text-primary" style="font-size: 24px;">collections_bookmark</span>
+                        </div>
+                        <p class="text-3xl font-black font-headline text-on-surface" th:text="${totalTitles}">0</p>
+                    </div>
+
+                    <!-- Total Chapters -->
+                    <div class="bg-surface-container rounded-2xl p-6 shadow-sm">
+                        <div class="flex items-center justify-between mb-4">
+                            <span class="text-sm font-headline font-bold text-on-surface/60 uppercase tracking-widest">Total Entries</span>
+                            <span class="material-symbols-outlined text-primary" style="font-size: 24px;">library_books</span>
+                        </div>
+                        <p class="text-3xl font-black font-headline text-on-surface" th:text="${totalChapters}">0</p>
+                    </div>
+
+                    <!-- Total Views -->
+                    <div class="bg-surface-container rounded-2xl p-6 shadow-sm">
+                        <div class="flex items-center justify-between mb-4">
+                            <span class="text-sm font-headline font-bold text-on-surface/60 uppercase tracking-widest">Total Views</span>
+                            <span class="material-symbols-outlined text-primary" style="font-size: 24px;">visibility</span>
+                        </div>
+                        <p class="text-3xl font-black font-headline text-on-surface" th:text="${totalViews}">0</p>
+                    </div>
+
+                    <!-- Average Views Per Chapter -->
+                    <div class="bg-surface-container rounded-2xl p-6 shadow-sm">
+                        <div class="flex items-center justify-between mb-4">
+                            <span class="text-sm font-headline font-bold text-on-surface/60 uppercase tracking-widest">Avg Views/Entry</span>
+                            <span class="material-symbols-outlined text-secondary" style="font-size: 24px;">trending_up</span>
+                        </div>
+                        <p class="text-3xl font-black font-headline text-on-surface" th:text="${avgViewsPerChapter}">0</p>
+                    </div>
+
+                    <!-- Chapters Without Thumbnails -->
+                    <div class="bg-surface-container rounded-2xl p-6 shadow-sm">
+                        <div class="flex items-center justify-between mb-4">
+                            <span class="text-sm font-headline font-bold text-on-surface/60 uppercase tracking-widest">Missing Thumbnails</span>
+                            <span class="material-symbols-outlined text-error" style="font-size: 24px;">image_not_supported</span>
+                        </div>
+                        <p class="text-3xl font-black font-headline text-on-surface" th:text="${chaptersWithoutThumbnails}">0</p>
+                    </div>
+
+                    <!-- System Status -->
+                    <div class="bg-surface-container rounded-2xl p-6 shadow-sm">
+                        <div class="flex items-center justify-between mb-4">
+                            <span class="text-sm font-headline font-bold text-on-surface/60 uppercase tracking-widest">System Status</span>
+                            <span class="material-symbols-outlined text-tertiary" style="font-size: 24px;">check_circle</span>
+                        </div>
+                        <p class="text-lg font-bold font-headline text-on-surface">Running</p>
+                    </div>
+                </div>
+
+                <!-- Most & Least Viewed -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-12">
+                    <!-- Most Viewed Chapter -->
+                    <div class="bg-surface-container rounded-2xl p-6 shadow-sm">
+                        <div class="flex items-center gap-2 mb-4">
+                            <span class="material-symbols-outlined text-primary">star</span>
+                            <h2 class="text-lg font-bold font-headline text-on-surface">Most Viewed Chapter</h2>
+                        </div>
+                        <div th:if="${mostViewedChapter}">
+                            <p class="text-on-surface/80 text-sm mb-1" th:text="${mostViewedChapter.name}">Chapter name</p>
+                            <p class="text-2xl font-bold font-headline text-primary" th:text="${mostViewedChapter.views} + ' views'">0 views</p>
+                        </div>
+                        <div th:unless="${mostViewedChapter}">
+                            <p class="text-on-surface/60 text-sm">No data available</p>
+                        </div>
+                    </div>
+
+                    <!-- Least Viewed Chapter (with views) -->
+                    <div class="bg-surface-container rounded-2xl p-6 shadow-sm">
+                        <div class="flex items-center gap-2 mb-4">
+                            <span class="material-symbols-outlined text-secondary">trending_down</span>
+                            <h2 class="text-lg font-bold font-headline text-on-surface">Least Viewed (Viewed)</h2>
+                        </div>
+                        <div th:if="${leastViewedChapter}">
+                            <p class="text-on-surface/80 text-sm mb-1" th:text="${leastViewedChapter.name}">Chapter name</p>
+                            <p class="text-2xl font-bold font-headline text-secondary" th:text="${leastViewedChapter.views} + ' views'">0 views</p>
+                        </div>
+                        <div th:unless="${leastViewedChapter}">
+                            <p class="text-on-surface/60 text-sm">No data available</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="bg-surface-container rounded-2xl p-6 shadow-sm">
+                    <h2 class="text-lg font-bold font-headline text-on-surface mb-4">Quick Actions</h2>
+                    <div class="flex flex-wrap gap-3">
+                        <button onclick="window.location.href='/admin/scanFiles'" class="px-4 py-2 bg-primary text-on-primary font-bold rounded transition-all hover:bg-primary-container text-sm">
+                            Scan Files
+                        </button>
+                        <button onclick="window.location.href='/admin/generateThumbnails'" class="px-4 py-2 bg-secondary text-on-secondary font-bold rounded transition-all hover:bg-secondary-container text-sm">
+                            Generate Thumbnails
+                        </button>
+                        <button onclick="window.location.href='/admin/refreshThumbnails'" class="px-4 py-2 bg-tertiary text-on-tertiary font-bold rounded transition-all hover:bg-tertiary-container text-sm">
+                            Refresh Thumbnails
+                        </button>
+                        <a href="/" class="px-4 py-2 bg-surface-container-high text-on-surface font-bold rounded transition-all hover:bg-surface-container text-sm">
+                            Back to Home
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

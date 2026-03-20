@@ -2,6 +2,7 @@ package dev.tr7zw.mango2j.db;
 
 import java.time.Instant;
 
+import dev.tr7zw.mango2j.util.DateFormatUtil;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -28,36 +29,41 @@ public class Chapter {
     @Setter
     @Column(unique = true, length = 1024)
     private String fullPath;
-    
+
     @NonNull
     @Getter
     @Setter
     private String path;
-    
+
     @NonNull
     @Getter
     private String name;
-    
+
     @Getter
     @Setter
-    @Column(length = 100_000)
+    @Column(length = 200_000)
     private byte[] thumbnail;
-    
+
     @Getter
     @Setter
     private Integer pageCount;
-    
+
     @Getter
     @Setter
     private Integer views = 0;
-    
+
     @Getter
     @Setter
     private Instant lastView = null;
-    
+
     @Getter
     @Setter
     @Column(length = 10_000)
     private String description;
-    
+
+    // used in the template, do not delete
+    public String getLastViewFormatted() {
+        return DateFormatUtil.formatTimeAgo(lastView);
+    }
+
 }

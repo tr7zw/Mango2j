@@ -1,0 +1,120 @@
+<!-- TopNavBar - Shared Fragment -->
+<nav class="fixed top-0 w-full z-50 glass-nav shadow-[0_32px_64px_-15px_rgba(182,160,255,0.06)]">
+  <div class="flex justify-between items-center px-6 h-16 w-full max-w-none">
+    <div class="flex items-center gap-8">
+      <a th:href="@{/}" class="text-2xl font-black tracking-tighter text-on-surface font-headline">Mango</a>
+      <div class="hidden md:flex items-center gap-6">
+        <a th:href="@{/}" class="font-headline font-bold tracking-tight text-on-surface/60 hover:text-on-surface transition-colors duration-300">Home</a>
+        <a th:href="@{/library}" class="font-headline font-bold tracking-tight text-on-surface/60 hover:text-on-surface transition-colors duration-300">Library</a>
+        <a th:href="@{/search}" class="font-headline font-bold tracking-tight text-on-surface/60 hover:text-on-surface transition-colors duration-300">Search</a>
+        <a th:href="@{/top}" class="font-headline font-bold tracking-tight text-on-surface/60 hover:text-on-surface transition-colors duration-300">Most Viewed</a>
+        <a th:href="@{/bottom}" class="font-headline font-bold tracking-tight text-on-surface/60 hover:text-on-surface transition-colors duration-300">Least Viewed</a>
+      </div>
+    </div>
+    <div class="flex items-center gap-4">
+      <!-- Status Label -->
+      <div class="hidden lg:flex items-center gap-2">
+        <span class="text-xs font-bold font-headline text-secondary tracking-widest uppercase" id="scan-status">Idle</span>
+        <button id="scan-btn" class="px-3 py-1 bg-primary text-on-primary text-xs font-bold rounded transition-all hover:bg-primary-container active:scale-95 hidden" onclick="startScan()">Scan</button>
+        <a href="/admin/dashboard" class="px-3 py-1 bg-secondary text-on-secondary text-xs font-bold rounded transition-all hover:bg-secondary-container active:scale-95">Dashboard</a>
+      </div>
+      <!-- Mobile Menu -->
+      <button class="p-2 text-on-surface/60 hover:text-on-surface transition-transform scale-95 active:scale-90 md:hidden" uk-toggle="target: #mobile-nav">
+        <span class="material-symbols-outlined" data-icon="menu">menu</span>
+      </button>
+    </div>
+  </div>
+</nav>
+
+<!-- Mobile Navigation Drawer -->
+<div id="mobile-nav" class="fixed left-0 top-0 z-40 h-screen w-64 bg-surface-container-low transform -translate-x-full transition-transform duration-300" uk-offcanvas="overlay: true">
+  <div class="flex flex-col h-full pt-20 px-4">
+    <nav class="space-y-2">
+      <a th:href="@{/}" class="block px-4 py-3 rounded-lg text-on-surface hover:bg-surface-container transition-colors">
+        <span class="font-headline font-bold">Home</span>
+      </a>
+      <a th:href="@{/library}" class="block px-4 py-3 rounded-lg text-on-surface hover:bg-surface-container transition-colors">
+        <span class="font-headline font-bold">Library</span>
+      </a>
+      <a th:href="@{/search}" class="block px-4 py-3 rounded-lg text-on-surface hover:bg-surface-container transition-colors">
+        <span class="font-headline font-bold">Search</span>
+      </a>
+      <a th:href="@{/top}" class="block px-4 py-3 rounded-lg text-on-surface hover:bg-surface-container transition-colors">
+        <span class="font-headline font-bold">Most Viewed</span>
+      </a>
+      <a th:href="@{/bottom}" class="block px-4 py-3 rounded-lg text-on-surface hover:bg-surface-container transition-colors">
+        <span class="font-headline font-bold">Least Viewed</span>
+      </a>
+    </nav>
+  </div>
+</div>
+
+<script>
+let statusPollInterval = null;
+
+async function updateStatus() {
+  try {
+    const response = await fetch('/admin/status');
+    const status = await response.text();
+    const statusLabel = document.getElementById('scan-status');
+    const previousStatus = statusLabel.textContent;
+
+    statusLabel.textContent = status;
+
+    // If status changed from non-idle to Idle, refresh the page
+    if (previousStatus !== 'Idle' && status === 'Idle') {
+      clearInterval(statusPollInterval);
+      statusPollInterval = null;
+      updateButtonVisibility();
+      setTimeout(() => {
+        location.reload();
+      }, 500);
+    } else {
+      updateButtonVisibility();
+    }
+  } catch (err) {
+    console.error('Failed to update status:', err);
+  }
+}
+
+function updateButtonVisibility() {
+  const btn = document.getElementById('scan-btn');
+  const statusLabel = document.getElementById('scan-status');
+  if (statusLabel.textContent === 'Idle') {
+    btn.classList.remove('hidden');
+  } else {
+    btn.classList.add('hidden');
+    // Start polling if not already polling and status is not Idle
+    if (!statusPollInterval) {
+      statusPollInterval = setInterval(updateStatus, 1000);
+    }
+  }
+}
+
+function startScan() {
+  const btn = document.getElementById('scan-btn');
+  const statusLabel = document.getElementById('scan-status');
+  btn.disabled = true;
+  btn.textContent = 'Starting...';
+  btn.classList.add('hidden');
+
+  fetch('/admin/scanFiles')
+    .then(response => {
+      // Start polling for status updates every second
+      statusPollInterval = setInterval(updateStatus, 1000);
+      updateStatus(); // Get initial status immediately
+    })
+    .catch(err => {
+      btn.disabled = false;
+      btn.textContent = 'Scan';
+      btn.classList.remove('hidden');
+      statusLabel.textContent = 'Error';
+      console.error(err);
+    });
+}
+
+// Initialize by fetching current status on page load
+window.addEventListener('DOMContentLoaded', async function() {
+  await updateStatus();
+});
+</script>
