@@ -39,10 +39,11 @@ public class FileService {
             put(".wmv", "VIDEO");
             put(".txt", "TXT");
             put(".pdf", "PDF");
+            put(".db", "IGNORE");
         }
     };
     
-    public ChapterWrapper getChapterWrapper(Path location) {
+    public ChapterWrapper getChapterWrapper(Path location) throws IOException {
         if (location.toFile().isDirectory()) {
             return new FlatDirChapter(location.toFile());
         } else {
@@ -194,28 +195,29 @@ public class FileService {
             return new FileInputStream(new File(dir, name));
         }
 
+        @Override
+        public void close() throws Exception {
+            // Nothing to close for flat directory
+        }
     }
 
-    @RequiredArgsConstructor
     private class ZipChapter implements ChapterWrapper {
 
         @NonNull
         private File file;
+        private ZipFile zipFile;
+        private List<String> filesListCache;
 
-        private List<String> getInternalFiles() {
-            try (ZipFile zipFile = new ZipFile(file)) {
-                return extractList(zipFile);
-            } catch (ZipException e) {
-                e.printStackTrace();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-            return Collections.emptyList();
+        public ZipChapter(File file) throws IOException {
+            this.file = file;
+            this.zipFile = new ZipFile(file);
         }
 
-        private List<String> extractList(ZipFile zipFile) {
-            return zipFile.stream().filter(z -> !z.isDirectory()).map(ZipEntry::getName).filter(n -> !n.toLowerCase().equals("thumbs.db"))
-                    .sorted(ImageNameSorterUtil.COMPARATOR).toList();
+        private List<String> getInternalFiles() {
+            if (filesListCache == null) {
+                filesListCache = zipFile.stream().filter(z -> !z.isDirectory()).map(ZipEntry::getName).sorted(ImageNameSorterUtil.COMPARATOR).toList();
+            }
+            return filesListCache;
         }
         
         @Override
@@ -236,8 +238,8 @@ public class FileService {
 
         @Override
         public InputStream getInputStream(int id) throws FileNotFoundException {
-            try (ZipFile zipFile = new ZipFile(file)) {
-                List<String> list = extractList(zipFile);
+            try {
+                List<String> list = getInternalFiles();
                 ByteArrayOutputStream buffer = new ByteArrayOutputStream();
                 zipFile.getInputStream(zipFile.getEntry(list.get(id))).transferTo(buffer);
                 return new ByteArrayInputStream(buffer.toByteArray());
@@ -256,15 +258,8 @@ public class FileService {
 
         @Override
         public String getFileType(int id) {
-            try (ZipFile zipFile = new ZipFile(file)) {
-                List<String> list = extractList(zipFile);
-                return list.get(id).split("\\.")[list.get(id).split("\\.").length-1].toLowerCase();
-            } catch (ZipException e) {
-                e.printStackTrace();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-            return null;
+            List<String> list = getInternalFiles();
+            return list.get(id).split("\\.")[list.get(id).split("\\.").length-1].toLowerCase();
         }
 
         @Override
@@ -277,6 +272,14 @@ public class FileService {
             return getInputStream(getInternalFiles().indexOf(name));
         }
 
+        @Override
+        public void close() throws Exception {
+            try {
+                zipFile.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
     }
 
 }

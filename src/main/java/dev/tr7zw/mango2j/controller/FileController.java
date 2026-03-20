@@ -23,13 +23,13 @@ public class FileController {
     }
 
     @GetMapping("/image/{chapter}/{id}")
-    public ResponseEntity<ByteArrayResource> getImage(@PathVariable Integer chapter, @PathVariable Integer id) throws IOException {
+    public ResponseEntity<ByteArrayResource> getImage(@PathVariable Integer chapter, @PathVariable Integer id) {
         Chapter ch = chapterRepo.getReferenceById(chapter);
-        ChapterWrapper chapterWrapper = fileService.getChapterWrapper(new File(ch.getFullPath()).toPath());
-        // Load your image file into a byte array
-        if (!chapterWrapper.hasFile(id)) {
-            return new ResponseEntity<>(null, new HttpHeaders(), HttpStatus.NOT_FOUND);
-        }
+        try (ChapterWrapper chapterWrapper = fileService.getChapterWrapper(new File(ch.getFullPath()).toPath())) {
+            // Load your image file into a byte array
+            if (!chapterWrapper.hasFile(id)) {
+                return new ResponseEntity<>(null, new HttpHeaders(), HttpStatus.NOT_FOUND);
+            }
 //        if(id.toLowerCase().endsWith(".png") || id.toLowerCase().endsWith(".jpg") || id.toLowerCase().endsWith(".jpeg")) {
 //            try {
 //                BufferedImage img = ImageIO.read(chapterWrapper.getInputStream(id));
@@ -49,18 +49,21 @@ public class FileController {
 //                e.printStackTrace();
 //            }
 //        }
-        byte[] imageBytes = chapterWrapper.getBytes(id);
+            byte[] imageBytes = chapterWrapper.getBytes(id);
 
-        // Wrap the byte array in a ByteArrayResource
-        ByteArrayResource resource = new ByteArrayResource(imageBytes);
+            // Wrap the byte array in a ByteArrayResource
+            ByteArrayResource resource = new ByteArrayResource(imageBytes);
 
-        // Set the headers
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(getMediaType(chapterWrapper.getFileType(id)));
-        headers.setContentLength(imageBytes.length);
+            // Set the headers
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(getMediaType(chapterWrapper.getFileType(id)));
+            headers.setContentLength(imageBytes.length);
 
-        // Return ResponseEntity with the image bytes and headers
-        return new ResponseEntity<>(resource, headers, HttpStatus.OK);
+            // Return ResponseEntity with the image bytes and headers
+            return new ResponseEntity<>(resource, headers, HttpStatus.OK);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @GetMapping("/thumbnail/{id}")
