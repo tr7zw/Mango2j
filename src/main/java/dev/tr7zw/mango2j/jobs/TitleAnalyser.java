@@ -63,12 +63,16 @@ public class TitleAnalyser implements DisposableBean {
         // Analyze direct chapters
         int totalViews = 0;
         int chapterCount = 0;
+        long totalFileSize = 0;
         java.time.Instant newestTime = null;
 
         // Get direct chapters
         List<Chapter> directChapters = chapterRepo.findByPath(title.getFullPath());
         totalViews = directChapters.stream()
                 .mapToInt(c -> c.getViews() == null ? 0 : c.getViews())
+                .sum();
+        totalFileSize = directChapters.stream()
+                .mapToLong(c -> c.getFileSize() == null ? 0 : c.getFileSize())
                 .sum();
         chapterCount = directChapters.size();
 
@@ -85,6 +89,7 @@ public class TitleAnalyser implements DisposableBean {
             // Add child stats to parent
             totalViews += child.getTotalViews() == null ? 0 : child.getTotalViews();
             chapterCount += child.getChapterCount() == null ? 0 : child.getChapterCount();
+            totalFileSize += child.getFileSize() == null ? 0 : child.getFileSize();
 
             // Update newest time if child has a newer one
             if (child.getNewestChapterTime() != null) {
@@ -104,6 +109,7 @@ public class TitleAnalyser implements DisposableBean {
         // Update title with calculated stats
         title.setTotalViews(totalViews);
         title.setChapterCount(chapterCount);
+        title.setFileSize(totalFileSize > 0 ? totalFileSize : null);
         title.setNewestChapterTime(newestTime);
         titleRepo.save(title);
     }

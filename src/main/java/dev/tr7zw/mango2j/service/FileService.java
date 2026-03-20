@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Instant;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -199,6 +200,35 @@ public class FileService {
         public void close() throws Exception {
             // Nothing to close for flat directory
         }
+
+        @Override
+        public Instant getLastModified() {
+            try {
+                return Instant.ofEpochMilli(Files.getLastModifiedTime(dir.toPath()).toMillis());
+            } catch (IOException e) {
+                e.printStackTrace();
+                return null;
+            }
+        }
+
+        @Override
+        public Long getFileSize() {
+            try {
+                return Files.walk(dir.toPath())
+                        .filter(Files::isRegularFile)
+                        .mapToLong(p -> {
+                            try {
+                                return Files.size(p);
+                            } catch (IOException e) {
+                                return 0;
+                            }
+                        })
+                        .sum();
+            } catch (IOException e) {
+                e.printStackTrace();
+                return null;
+            }
+        }
     }
 
     private class ZipChapter implements ChapterWrapper {
@@ -278,6 +308,26 @@ public class FileService {
                 zipFile.close();
             } catch (IOException e) {
                 e.printStackTrace();
+            }
+        }
+
+        @Override
+        public Instant getLastModified() {
+            try {
+                return Instant.ofEpochMilli(Files.getLastModifiedTime(file.toPath()).toMillis());
+            } catch (IOException e) {
+                e.printStackTrace();
+                return null;
+            }
+        }
+
+        @Override
+        public Long getFileSize() {
+            try {
+                return Files.size(file.toPath());
+            } catch (IOException e) {
+                e.printStackTrace();
+                return null;
             }
         }
     }

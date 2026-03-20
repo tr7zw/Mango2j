@@ -1,0 +1,66 @@
+<div class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" id="chapter-info-modal" hx-on:click="if(event.target.id === 'chapter-info-modal') htmx.ajax('GET', 'javascript:void(0)', {target: '#chapter-info-modal', swap: 'delete'})">
+    <div class="bg-surface-container rounded-2xl max-w-md w-full max-h-[80vh] overflow-y-auto shadow-lg">
+        <!-- Header -->
+        <div class="sticky top-0 bg-surface-container-high border-b border-surface-container-highest p-6 flex justify-between items-center">
+            <h2 class="text-xl font-bold font-headline text-on-surface">Chapter Info</h2>
+            <button class="text-on-surface/60 hover:text-on-surface transition-colors" onclick="document.getElementById('chapter-info-modal').remove()">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+
+        <!-- Content -->
+        <div class="p-6 space-y-4">
+            <!-- Chapter Name -->
+            <div>
+                <p class="text-xs font-bold text-on-surface/60 uppercase tracking-widest mb-1">Chapter Name</p>
+                <p class="text-lg font-headline font-bold text-on-surface" th:text="${chapter.name}">Chapter Name</p>
+            </div>
+
+            <!-- Folder Path -->
+            <div>
+                <p class="text-xs font-bold text-on-surface/60 uppercase tracking-widest mb-1">Folder Path</p>
+                <p class="text-sm text-on-surface/80 break-all font-mono" th:text="${chapter.fullPath}">path</p>
+            </div>
+
+            <!-- Collection -->
+            <div>
+                <p class="text-xs font-bold text-on-surface/60 uppercase tracking-widest mb-1">Collection</p>
+                <p class="text-sm text-on-surface/80" th:text="${title?.name ?? 'Unknown'}">Collection Name</p>
+            </div>
+
+            <!-- Views -->
+            <div class="grid grid-cols-2 gap-4">
+                <div class="bg-surface-container-low rounded-lg p-3">
+                    <p class="text-xs font-bold text-on-surface/60 uppercase tracking-widest mb-2">Views</p>
+                    <p class="text-2xl font-bold font-headline text-primary" th:text="${chapter.views ?? 0}">0</p>
+                </div>
+                <div class="bg-surface-container-low rounded-lg p-3">
+                    <p class="text-xs font-bold text-on-surface/60 uppercase tracking-widest mb-2">Pages</p>
+                    <p class="text-2xl font-bold font-headline text-secondary" th:text="${chapter.pageCount ?? 'N/A'}">0</p>
+                </div>
+            </div>
+
+            <!-- Last Viewed -->
+            <div th:if="${chapter.lastView != null}">
+                <p class="text-xs font-bold text-on-surface/60 uppercase tracking-widest mb-1">Last Viewed</p>
+                <p class="text-sm text-on-surface/80" th:text="${chapter.lastViewFormatted}">5d ago</p>
+            </div>
+
+            <!-- Description -->
+            <div th:if="${chapter.description != null}">
+                <p class="text-xs font-bold text-on-surface/60 uppercase tracking-widest mb-1">Description</p>
+                <p class="text-sm text-on-surface/80" th:text="${chapter.description}">Description</p>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="pt-4 border-t border-surface-container-highest space-y-2">
+                <a th:href="'/reader/' + ${chapter.id}" class="block w-full px-4 py-2 bg-primary text-on-primary font-bold rounded text-sm text-center transition-all hover:bg-primary-container">
+                    Open Chapter
+                </a>
+                <button onclick="document.getElementById('chapter-info-modal').remove()" class="w-full px-4 py-2 bg-surface-container-high text-on-surface font-bold rounded text-sm transition-all hover:bg-surface-container-highest">
+                    Close
+                </button>
+            </div>
+        </div>
+    </div>
+</div>

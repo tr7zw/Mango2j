@@ -8,6 +8,7 @@ import org.springframework.data.domain.*;
 import org.springframework.stereotype.*;
 import org.springframework.ui.*;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.http.*;
 
 import java.io.*;
 import java.time.*;
@@ -286,6 +287,82 @@ public class LibraryController {
             }
         }
         return null;
+    }
+
+    @GetMapping("/title/{id}/info")
+    @ResponseBody
+    public ResponseEntity<String> titleInfo(@PathVariable Integer id) {
+        Title title = titleRepo.getReferenceById(id);
+
+        String html = String.format("""
+            <div class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" id="title-info-modal" onclick="if(event.target.id === 'title-info-modal') document.getElementById('title-info-modal').remove()">
+                <div class="bg-surface-container rounded-2xl max-w-md w-full max-h-[80vh] overflow-y-auto shadow-lg">
+                    <!-- Header -->
+                    <div class="sticky top-0 bg-surface-container-high border-b border-surface-container-highest p-6 flex justify-between items-center">
+                        <h2 class="text-xl font-bold font-headline text-on-surface">Collection Info</h2>
+                        <button class="text-on-surface/60 hover:text-on-surface transition-colors" onclick="document.getElementById('title-info-modal').remove()">
+                            <span class="material-symbols-outlined">close</span>
+                        </button>
+                    </div>
+
+                    <!-- Content -->
+                    <div class="p-6 space-y-4">
+                        <!-- Collection Name -->
+                        <div>
+                            <p class="text-xs font-bold text-on-surface/60 uppercase tracking-widest mb-1">Collection Name</p>
+                            <p class="text-lg font-headline font-bold text-on-surface">%s</p>
+                        </div>
+
+                        <!-- Folder Path -->
+                        <div>
+                            <p class="text-xs font-bold text-on-surface/60 uppercase tracking-widest mb-1">Folder Path</p>
+                            <p class="text-sm text-on-surface/80 break-all font-mono">%s</p>
+                        </div>
+
+                        <!-- Stats Grid -->
+                        <div class="grid grid-cols-3 gap-3">
+                            <div class="bg-surface-container-low rounded-lg p-3">
+                                <p class="text-xs font-bold text-on-surface/60 uppercase tracking-widest mb-2 truncate">Total Views</p>
+                                <p class="text-2xl font-bold font-headline text-primary">%d</p>
+                            </div>
+                            <div class="bg-surface-container-low rounded-lg p-3">
+                                <p class="text-xs font-bold text-on-surface/60 uppercase tracking-widest mb-2 truncate">Chapters</p>
+                                <p class="text-2xl font-bold font-headline text-secondary">%d</p>
+                            </div>
+                            <div class="bg-surface-container-low rounded-lg p-3">
+                                <p class="text-xs font-bold text-on-surface/60 uppercase tracking-widest mb-2 truncate">Size</p>
+                                <p class="text-lg font-bold font-headline text-tertiary">%s</p>
+                            </div>
+                        </div>
+
+                        <!-- Newest Chapter -->
+                        %s
+
+                        <!-- Quick Actions -->
+                        <div class="pt-4 border-t border-surface-container-highest space-y-2">
+                            <a href="/library/%d" class="block w-full px-4 py-2 bg-primary text-on-primary font-bold rounded text-sm text-center transition-all hover:bg-primary-container">
+                                Open Collection
+                            </a>
+                            <button onclick="document.getElementById('title-info-modal').remove()" class="w-full px-4 py-2 bg-surface-container-high text-on-surface font-bold rounded text-sm transition-all hover:bg-surface-container-highest">
+                                Close
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            """,
+            FormatUtil.escapeHtml(title.getName()),
+            FormatUtil.escapeHtml(title.getFullPath()),
+            title.getTotalViews() != null ? title.getTotalViews() : 0,
+            title.getChapterCount() != null ? title.getChapterCount() : 0,
+            title.getFileSize() != null ? FormatUtil.formatFileSize(title.getFileSize()) : "0 B",
+            title.getNewestChapterTime() != null ? String.format("<div><p class=\"text-xs font-bold text-on-surface/60 uppercase tracking-widest mb-1\">Newest Chapter</p><p class=\"text-sm text-on-surface/80\">%s</p></div>", FormatUtil.escapeHtml(DateFormatUtil.formatTimeAgo(title.getNewestChapterTime()))) : "",
+            title.getId()
+        );
+
+        return ResponseEntity.ok()
+                .contentType(MediaType.TEXT_HTML)
+                .body(html);
     }
 
 }

@@ -39,4 +39,8 @@ public class Title {
     @Setter
     private Instant newestChapterTime;
 
+    @Getter
+    @Setter
+    private Long fileSize;
+
 }

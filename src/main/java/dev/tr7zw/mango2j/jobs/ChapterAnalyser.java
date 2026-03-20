@@ -62,15 +62,36 @@ public class ChapterAnalyser implements DisposableBean {
             try (ChapterWrapper wrapper = fileService.getChapterWrapper(new File(chapter.getFullPath()).toPath())) {
                 Title title = titleRepo.findByFullPath(chapter.getPath());
                 String metadata = title.getName() + ", " + chapter.getName();
+                boolean updated = false;
+
+                // Fill in last modified time if null
+                if (chapter.getLastModified() == null) {
+                    chapter.setLastModified(wrapper.getLastModified());
+                    updated = true;
+                }
+
+                // Fill in file size if null
+                if (chapter.getFileSize() == null) {
+                    chapter.setFileSize(wrapper.getFileSize());
+                    updated = true;
+                }
+
+                // Handle description
                 if (wrapper.hasFile("description.txt")) {
                     String dec = metadata + ", " + new String(wrapper.getFile("description.txt").readAllBytes());
-                    if (dec.equals(chapter.getDescription()))
-                        continue; // No change, skip saving
-                    log.info("Updating description for chapter: " + chapter.getFullPath());
-                    chapter.setDescription(dec);
-                    chapterRepo.save(chapter);
-                } else  {
-                    chapter.setDescription(metadata);
+                    if (!dec.equals(chapter.getDescription())) {
+                        log.info("Updating description for chapter: " + chapter.getFullPath());
+                        chapter.setDescription(dec);
+                        updated = true;
+                    }
+                } else {
+                    if (!metadata.equals(chapter.getDescription())) {
+                        chapter.setDescription(metadata);
+                        updated = true;
+                    }
+                }
+
+                if (updated) {
                     chapterRepo.save(chapter);
                 }
             } catch (Exception ex) {
