@@ -45,32 +45,37 @@
                 <a th:href="@{/library}" class="text-secondary font-label text-sm uppercase tracking-widest hover:underline">View All</a>
             </div>
             <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6" th:if="${!chapters.empty}">
-                <a th:each="chapter : ${chapters}" th:if="${chapterStat.index < 30}" th:href="'/reader/' + ${chapter.id}" class="group cursor-pointer">
-                    <div class="relative aspect-[2/3] rounded-lg overflow-hidden bg-surface-container-low mb-3">
-                        <img th:if="${chapter.thumbnail != null}" th:src="'/thumbnail/' + ${chapter.id}" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110">
-                        <div th:if="${chapter.thumbnail == null}" class="w-full h-full bg-surface-container flex items-center justify-center">
-                            <span class="material-symbols-outlined text-on-surface-variant text-4xl">image_not_supported</span>
+                <div th:each="chapter : ${chapters}" th:if="${chapterStat.index < 30}" class="group cursor-pointer">
+                    <a th:href="'/reader/' + ${chapter.id}" class="block">
+                        <div class="relative aspect-[2/3] rounded-lg overflow-hidden bg-surface-container-low mb-3">
+                            <img th:if="${chapter.thumbnail != null}" th:src="'/thumbnail/' + ${chapter.id}" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110">
+                            <div th:if="${chapter.thumbnail == null}" class="w-full h-full bg-surface-container flex items-center justify-center">
+                                <span class="material-symbols-outlined text-on-surface-variant text-4xl">image_not_supported</span>
+                            </div>
+                            <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end justify-between p-4">
+                                <span class="material-symbols-outlined text-on-surface" style="font-variation-settings: 'FILL' 1;">play_arrow</span>
+                                <button type="button" class="p-1.5 bg-primary/80 hover:bg-primary rounded text-on-primary transition-all" th:hx-get="@{/chapter/{id}/info(id=${chapter.id})}" hx-target="body" hx-swap="beforeend" onclick="event.preventDefault(); event.stopPropagation();">
+                                    <span class="material-symbols-outlined text-sm">info</span>
+                                </button>
+                            </div>
                         </div>
-                        <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-4">
-                            <span class="material-symbols-outlined text-on-surface" style="font-variation-settings: 'FILL' 1;">play_arrow</span>
+                        <h3 class="font-headline font-bold text-on-surface group-hover:text-primary transition-colors line-clamp-2 text-sm" th:text="${chapter.name}"></h3>
+                        <div class="flex items-center gap-3 mt-1 text-xs text-on-surface-variant">
+                            <span th:if="${chapter.views != null}" class="flex items-center gap-1">
+                                <span class="material-symbols-outlined text-sm">visibility</span>
+                                <span th:text="${chapter.views}"></span>
+                            </span>
+                            <span th:if="${chapter.pageCount != null}" class="flex items-center gap-1">
+                                <span class="material-symbols-outlined text-sm">auto_stories</span>
+                                <span th:text="${chapter.pageCount}"></span>
+                            </span>
+                            <span th:if="${chapter.lastViewFormatted != null}" class="flex items-center gap-1">
+                                <span class="material-symbols-outlined text-sm">schedule</span>
+                                <span th:text="${chapter.lastViewFormatted}"></span>
+                            </span>
                         </div>
-                    </div>
-                    <h3 class="font-headline font-bold text-on-surface group-hover:text-primary transition-colors line-clamp-2 text-sm" th:text="${chapter.name}"></h3>
-                    <div class="flex items-center gap-3 mt-1 text-xs text-on-surface-variant">
-                        <span th:if="${chapter.views != null}" class="flex items-center gap-1">
-                            <span class="material-symbols-outlined text-sm">visibility</span>
-                            <span th:text="${chapter.views}"></span>
-                        </span>
-                        <span th:if="${chapter.pageCount != null}" class="flex items-center gap-1">
-                            <span class="material-symbols-outlined text-sm">auto_stories</span>
-                            <span th:text="${chapter.pageCount}"></span>
-                        </span>
-                        <span th:if="${chapter.lastViewFormatted != null}" class="flex items-center gap-1">
-                            <span class="material-symbols-outlined text-sm">schedule</span>
-                            <span th:text="${chapter.lastViewFormatted}"></span>
-                        </span>
-                    </div>
-                </a>
+                    </a>
+                </div>
             </div>
             <div th:if="${chapters.empty}" class="text-center py-12">
                 <span class="material-symbols-outlined text-on-surface-variant text-4xl mb-4 block">folder_open</span>
@@ -93,8 +98,11 @@
                             <div th:if="${chapterThumbnails[titleStat.title.id] == null}" class="w-full h-full bg-gradient-to-br from-primary/10 to-secondary/10 group-hover:opacity-80 transition-opacity duration-500 flex items-center justify-center">
                                 <span class="material-symbols-outlined text-on-surface-variant text-3xl">folder</span>
                             </div>
-                            <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-4">
+                            <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end justify-between p-4">
                                 <span class="material-symbols-outlined text-on-surface" style="font-variation-settings: 'FILL' 1;">arrow_forward</span>
+                                <button type="button" class="p-1.5 bg-primary/80 hover:bg-primary rounded text-on-primary transition-all" th:hx-get="@{/title/{id}/info(id=${titleStat.title.id})}" hx-target="body" hx-swap="beforeend" onclick="event.preventDefault(); event.stopPropagation();">
+                                    <span class="material-symbols-outlined text-sm">info</span>
+                                </button>
                             </div>
                         </div>
                         <h3 class="font-headline font-bold text-on-surface group-hover:text-primary transition-colors line-clamp-2" th:text="${titleStat.title.name}"></h3>

@@ -68,6 +68,10 @@ public class ImageCounter implements DisposableBean {
                     if (chapter.getViews() == null) {
                         chapter.setViews(0);
                     }
+                    // Reset fileSize when page count changes
+                    if (!Objects.equals(size, old)) {
+                        chapter.setFileSize(null);
+                    }
                     chapterRepo.save(chapter);
                     log.log(Level.INFO,
                             "Updated chapter size of " + chapter.getFullPath() + " from " + old + " to " + size);

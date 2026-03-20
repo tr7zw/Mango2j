@@ -61,6 +61,14 @@ public class Chapter {
     @Column(length = 10_000)
     private String description;
 
+    @Getter
+    @Setter
+    private Instant lastModified;
+
+    @Getter
+    @Setter
+    private Long fileSize;
+
     // used in the template, do not delete
     public String getLastViewFormatted() {
         return DateFormatUtil.formatTimeAgo(lastView);

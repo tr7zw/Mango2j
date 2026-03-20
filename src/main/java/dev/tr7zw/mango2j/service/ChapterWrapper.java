@@ -4,6 +4,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.time.Instant;
 import java.util.List;
 
 public interface ChapterWrapper extends AutoCloseable {
@@ -15,6 +16,8 @@ public interface ChapterWrapper extends AutoCloseable {
     String getFileType(int id);
     boolean hasFile(String name);
     InputStream getFile(String name) throws FileNotFoundException;
+    Instant getLastModified();
+    Long getFileSize();
     default byte[] getBytes(int id) throws IOException {
         ByteArrayOutputStream buffer = new ByteArrayOutputStream();
         try(InputStream in = getInputStream(id)){
