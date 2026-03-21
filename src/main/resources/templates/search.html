@@ -13,10 +13,17 @@
                 <div class="flex-grow">
                     <input class="w-full px-6 py-3 bg-surface-container-low rounded-lg text-on-surface placeholder-on-surface-variant focus:outline-none focus:ring-2 focus:ring-primary/50" type="search" name="query" placeholder="Search manga..." th:value="${query}">
                 </div>
+                <input type="hidden" name="semantic" th:value="${semantic}">
                 <button class="px-6 py-3 bg-gradient-to-r from-primary to-primary-container text-on-primary font-bold rounded-lg hover:shadow-lg hover:shadow-primary/20 transition-all active:scale-95">
                     <span class="material-symbols-outlined">search</span>
                 </button>
             </form>
+            <div class="flex items-center gap-3 mt-4">
+                <label class="flex items-center gap-2 cursor-pointer">
+                    <input type="checkbox" name="semantic" th:checked="${semantic}" onchange="document.location.href = '?query=' + encodeURIComponent(document.querySelector('input[name=query]').value) + '&semantic=' + (this.checked ? 'true' : 'false')" class="w-4 h-4">
+                    <span class="text-sm font-medium text-on-surface-variant">Semantic Search</span>
+                </label>
+            </div>
         </div>
 
         <!-- Suggested Tags -->
@@ -24,7 +31,7 @@
             <p class="text-xs font-bold text-on-surface/60 uppercase tracking-widest mb-3">Suggested Tags</p>
             <div class="flex flex-wrap gap-2">
                 <a th:each="tag, tagStat : ${suggestedTags}"
-                   th:href="@{/search(query=${query} + ' ' + ${tag.key})}"
+                   th:href="@{/search(query=${query} + ' ' + ${tag.key}, semantic=${semantic})}"
                    class="inline-flex items-center gap-2 px-3 py-1.5 bg-surface-container-low hover:bg-primary/20 rounded-full text-xs font-medium text-on-surface-variant hover:text-primary transition-colors border border-outline-variant/30">
                     <span th:text="${tag.key}"></span>
                     <span class="text-on-surface/40 text-xs" th:text="'(' + ${tag.value} + ')'"></span>
