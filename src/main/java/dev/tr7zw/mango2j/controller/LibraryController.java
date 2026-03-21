@@ -246,17 +246,38 @@ public class LibraryController {
     }
 
     @GetMapping("/search")
-    public String search(@RequestParam(name = "query", required = false) String query, Model model) {
+    public String search(@RequestParam(name = "query", required = false) String query,
+                        @RequestParam(name = "semantic", defaultValue = "false") boolean useSemantic,
+                        Model model) {
         List<Chapter> chapters = new ArrayList<>();
         Map<String, Integer> suggestedTags = new LinkedHashMap<>();
 
         if (query != null && !query.isBlank()) {
-            chapters = chapterRepo.findAll(ChapterRepository.descriptionMatches(query));
-            model.addAttribute("name", "Search results for: " + query);
-            if (chapters.isEmpty()) {
-                Page<Chapter> result = chapterRepo.findAll(ChapterRepository.descriptionRankedSearch(query), PageRequest.of(0, 20));
-                chapters = result.getContent();
-                model.addAttribute("name", "Closest search results for: " + query);
+            if (useSemantic) {
+                // Semantic search: find similar chapters based on description similarity
+                List<Chapter> allChapters = chapterRepo.findAll();
+                Map<String, Integer> documentFrequency = getDocumentFrequency(allChapters);
+                chapters = allChapters.stream()
+                    .map(c -> new AbstractMap.SimpleEntry<>(c,
+                        SimilarityUtil.cosineSimilarity(
+                            SimilarityUtil.toVector(query, allChapters.size(), documentFrequency),
+                            SimilarityUtil.toVector(c.getDescription(), allChapters.size(), documentFrequency)
+                        )))
+                    .filter(e -> e.getValue() > 0.1)  // Minimum similarity threshold
+                    .sorted((a, b) -> Double.compare(b.getValue(), a.getValue()))
+                    .limit(100)
+                    .map(AbstractMap.SimpleEntry::getKey)
+                    .collect(Collectors.toList());
+                model.addAttribute("name", "Semantic search for: " + query);
+            } else {
+                // Keyword search
+                chapters = chapterRepo.findAll(ChapterRepository.descriptionMatches(query));
+                model.addAttribute("name", "Search results for: " + query);
+                if (chapters.isEmpty()) {
+                    Page<Chapter> result = chapterRepo.findAll(ChapterRepository.descriptionRankedSearch(query), PageRequest.of(0, 20));
+                    chapters = result.getContent();
+                    model.addAttribute("name", "Closest search results for: " + query);
+                }
             }
 
             // Extract and suggest tags from search results
@@ -271,7 +292,6 @@ public class LibraryController {
                     .filter(token -> !token.isBlank())
                     .collect(Collectors.toSet());
 
-                // Limit to top 15 tags and exclude already-searched tokens
                 suggestedTags = suggestedTags.entrySet().stream()
                     .filter(entry -> !searchedTokens.contains(entry.getKey()))
                     .limit(25)
@@ -289,10 +309,23 @@ public class LibraryController {
         model.addAttribute("scanStatus", statusUtil.getScanStatus());
         model.addAttribute("chapters", chapters);
         model.addAttribute("query", query);
+        model.addAttribute("semantic", useSemantic);
         model.addAttribute("suggestedTags", suggestedTags);
         model.addAttribute("titles", new ArrayList<>());
         // Return the name of the Thymeleaf template without the extension
         return "search";
+    }
+
+    private Map<String, Integer> getDocumentFrequency(List<Chapter> chapters) {
+        Map<String, Integer> documentFrequency = new HashMap<>();
+        for (Chapter chapter : chapters) {
+            String desc = chapter.getDescription();
+            Set<String> tags = TagUtil.extractTags(desc);
+            for (String tag : tags) {
+                documentFrequency.put(tag, documentFrequency.getOrDefault(tag, 0) + 1);
+            }
+        }
+        return documentFrequency;
     }
 
     private Map<Integer, Integer> generateThumbnails(List<Title> titles) {

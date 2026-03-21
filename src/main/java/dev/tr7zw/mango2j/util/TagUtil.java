@@ -13,9 +13,9 @@ public class TagUtil {
         }
 
         Set<String> stopWords = Set.of(
-                "the", "a", "an", "is", "are", "of", "for", "to", "and", "or",
-                "in", "on", "at", "from", "by", "as", "about", "check", "my",
-                "more", "content", "http", "https", "www", "com", "org", "net", "full", "posts", "here",
+                "the", "a", "an", "is", "are", "of", "for", "to", "and", "or", "voted", "very", "join", "two",
+                "in", "on", "at", "from", "by", "as", "about", "check", "my", "but", "off", "read", "any", "who",
+                "more", "content", "http", "https", "www", "com", "org", "net", "full", "posts", "here", "was",
                 "with", "that", "this", "it", "be", "have", "do", "not", "can", "want", "you", "jump", "also",
                 "will", "would", "could", "should", "may", "might", "must", "shall", "enjoy", "hope", "into", "one",
                 "zip", "rar", "7z", "pdf", "epub", "mobi", "cbz", "cbr", "php", "js", "css", "html", "xml", "json", "txt", "md",
@@ -23,7 +23,7 @@ public class TagUtil {
                 "patreon", "gumroad", "ko-fi", "paypal", "buymeacoffee", "discord", "twitter", "facebook", "instagram", "linkedin",
                 "bit", "fanbox", "pixiv", "deviantart", "artstation", "github", "gitlab", "soon", "coming", "update", "new",
                 "release", "latest", "chapter", "volume", "series", "author", "commission", "pages", "journal", "blog", "website", "store",
-                "shop", "contact", "email", "subscribe", "follow", "support", "donate", "bookmarks"
+                "shop", "contact", "email", "subscribe", "follow", "support", "donate", "bookmarks", "your", "gets", "work", "original"
         );
 
         return Arrays.stream(text.toLowerCase().split("[,\\s/\\-_\\.!?;:]+"))

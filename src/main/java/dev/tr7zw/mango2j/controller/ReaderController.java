@@ -73,6 +73,38 @@ public class ReaderController {
         Chapter chapter = chapterRepo.getReferenceById(id);
         Title title = titleRepo.findByFullPath(chapter.getPath());
 
+        // Find similar chapters
+        List<Chapter> allChapters = chapterRepo.findAll();
+        List<Object> similarChapters = SimilarityUtil.findSimilar(
+            chapter,
+            new ArrayList<>(allChapters),
+            c -> ((Chapter) c).getDescription(),
+            c -> ((Chapter) c).getId(),
+            3
+        );
+
+        String similarChaptersHtml = "";
+        if (!similarChapters.isEmpty()) {
+            StringBuilder sb = new StringBuilder();
+            sb.append("<div class='pt-4 border-t border-surface-container-highest'>");
+            sb.append("<p class='text-xs font-bold text-on-surface/60 uppercase tracking-widest mb-3'>Similar Chapters</p>");
+            sb.append("<div class='space-y-2'>");
+            for (Object similar : similarChapters) {
+                Chapter simChapter = (Chapter) similar;
+                sb.append(String.format(
+                    "<a href='/reader/%d' class='block p-2 bg-surface-container-low hover:bg-primary/10 rounded transition-colors'>" +
+                    "<p class='text-xs font-bold text-on-surface/60 truncate'>%s</p>" +
+                    "<p class='text-xs text-on-surface-variant truncate'>%s</p>" +
+                    "</a>",
+                    simChapter.getId(),
+                    FormatUtil.escapeHtml(simChapter.getName()),
+                    FormatUtil.escapeHtml(simChapter.getPath())
+                ));
+            }
+            sb.append("</div></div>");
+            similarChaptersHtml = sb.toString();
+        }
+
         String html = String.format("""
             <div class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" id="chapter-info-modal" onclick="if(event.target.id === 'chapter-info-modal') document.getElementById('chapter-info-modal').remove()">
                 <div class="bg-surface-container rounded-2xl max-w-md w-full max-h-[80vh] overflow-y-auto shadow-lg">
@@ -128,6 +160,9 @@ public class ReaderController {
                         <!-- Description -->
                         %s
 
+                        <!-- Similar Chapters -->
+                        %s
+
                         <!-- Quick Actions -->
                         <div class="pt-4 border-t border-surface-container-highest space-y-2">
                             <a href="/reader/%d" class="block w-full px-4 py-2 bg-primary text-on-primary font-bold rounded text-sm text-center transition-all hover:bg-primary-container">
@@ -150,6 +185,7 @@ public class ReaderController {
             chapter.getLastModified() != null ? String.format("<div><p class=\"text-xs font-bold text-on-surface/60 uppercase tracking-widest mb-1\">Last Modified</p><p class=\"text-sm text-on-surface/80\">%s</p></div>", FormatUtil.escapeHtml(DateFormatUtil.formatTimeAgo(chapter.getLastModified()))) : "",
             chapter.getFileSize() != null ? String.format("<div><p class=\"text-xs font-bold text-on-surface/60 uppercase tracking-widest mb-1\">File Size</p><p class=\"text-sm text-on-surface/80\">%s</p></div>", FormatUtil.formatFileSize(chapter.getFileSize())) : "",
             chapter.getDescription() != null ? String.format("<div><p class=\"text-xs font-bold text-on-surface/60 uppercase tracking-widest mb-1\">Description</p><p class=\"text-sm text-on-surface/80 whitespace-pre-wrap break-words\">%s</p></div>", FormatUtil.escapeHtml(chapter.getDescription())) : "",
+            similarChaptersHtml,
             chapter.getId()
         );
 
