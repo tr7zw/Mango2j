@@ -302,7 +302,7 @@ public class LibraryController {
                 .limit(100)
                 .map(e -> {
                     long pct = Math.round(100.0 * e.getValue() / finalMaxTagWeight);
-                    return new DiscoverResult(e.getKey(), Math.min(pct, 100));
+                    return new DiscoverResult(e.getKey(), pct);
                 })
                 .collect(Collectors.toList());
         }
