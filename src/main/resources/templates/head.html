@@ -7,11 +7,8 @@
     <link rel="manifest" th:href="@{'/manifest.json'}">
 
     <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script th:src="@{'/css/tailwind.css'}"></script>
 
-    <!-- Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300..700&family=Manrope:wght@200..800&display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
 
     <!-- Tailwind Configuration -->
     <script id="tailwind-config">
@@ -86,12 +83,9 @@
     <!-- Mango CSS -->
     <link rel="stylesheet" th:href="@{'/css/mango.css'}" />
 
-    <!-- Polyfills & Libraries -->
-    <script src="https://polyfill.io/v3/polyfill.min.js?features=MutationObserver%2Cdefault%2CmatchMedia&flats=gated"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
-    <script type="module" src="https://cdn.jsdelivr.net/gh/alpinejs/alpine@v2.8.0/dist/alpine.min.js"></script>
-    <script nomodule th:src="@{'/js/alpine-ie11.min.js'}" defer></script>
-    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    <script th:src="@{'/js/jquery.min.js'}"></script>
+    <script nomodule th:src="@{'/js/alpine.min.js'}" defer></script>
+    <script th:src="@{'/js/htmx.min.js'}"></script>
     <script th:src="@{'/js/common.js'}"></script>
 
   

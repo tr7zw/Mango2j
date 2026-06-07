@@ -245,6 +245,62 @@ public class LibraryController {
         return "viewcount";
     }
 
+    public record DiscoverResult(Chapter chapter, long score) {}
+
+    @GetMapping("/discover")
+    public String discover(Model model) {
+        model.addAttribute("scanStatus", statusUtil.getScanStatus());
+
+        List<Chapter> allChapters = chapterRepo.findAll();
+
+        // Build weighted tag scores from chapters that have been viewed
+        Map<String, Long> tagWeights = new HashMap<>();
+        long maxTagWeight = 1L;
+        for (Chapter c : allChapters) {
+            if (c.getViews() != null && c.getViews() > 0 && c.getDescription() != null) {
+                Set<String> tags = TagUtil.extractTags(c.getDescription());
+                long views = c.getViews();
+                for (String tag : tags) {
+                    long newWeight = tagWeights.merge(tag, views, Long::sum);
+                    if (newWeight > maxTagWeight) maxTagWeight = newWeight;
+                }
+            }
+        }
+
+        List<DiscoverResult> results = new ArrayList<>();
+        if (!tagWeights.isEmpty()) {
+            final long finalMaxTagWeight = maxTagWeight;
+            results = allChapters.stream()
+                .filter(c -> c.getViews() == null || c.getViews() == 0)
+                .map(c -> {
+                    long score = 0L;
+                    if (c.getDescription() != null) {
+                        Set<String> tags = TagUtil.extractTags(c.getDescription());
+                        score = tags.stream()
+                            .mapToLong(tag -> tagWeights.getOrDefault(tag, 0L))
+                            .sum();
+                    }
+                    return new AbstractMap.SimpleEntry<>(c, score);
+                })
+                .filter(e -> e.getValue() > 0)
+                .sorted((a, b) -> {
+                    int viewsA = a.getKey().getViews() == null ? 0 : a.getKey().getViews();
+                    int viewsB = b.getKey().getViews() == null ? 0 : b.getKey().getViews();
+                    if (viewsA != viewsB) return Integer.compare(viewsA, viewsB);
+                    return Long.compare(b.getValue(), a.getValue());
+                })
+                .limit(100)
+                .map(e -> {
+                    long pct = Math.round(100.0 * e.getValue() / finalMaxTagWeight);
+                    return new DiscoverResult(e.getKey(), Math.min(pct, 100));
+                })
+                .collect(Collectors.toList());
+        }
+
+        model.addAttribute("results", results);
+        return "discover";
+    }
+
     @GetMapping("/search")
     public String search(@RequestParam(name = "query", required = false) String query,
                         @RequestParam(name = "semantic", defaultValue = "false") boolean useSemantic,

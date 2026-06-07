@@ -289,6 +289,9 @@ public class FileService {
         @Override
         public String getFileType(int id) {
             List<String> list = getInternalFiles();
+            if (id >= list.size()) {
+                return null;
+            }
             return list.get(id).split("\\.")[list.get(id).split("\\.").length-1].toLowerCase();
         }
 

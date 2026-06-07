@@ -6,7 +6,7 @@
 	<parent>
 		<groupId>org.springframework.boot</groupId>
 		<artifactId>spring-boot-starter-parent</artifactId>
-		<version>4.0.4</version>
+		<version>4.0.6</version>
 		<relativePath /> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>dev.tr7zw</groupId>
@@ -32,7 +32,7 @@
 		<dependency>
 			<groupId>org.projectlombok</groupId>
 			<artifactId>lombok</artifactId>
-			<version>1.18.44</version>
+			<version>1.18.46</version>
 			<optional>true</optional>
 		</dependency>
 
@@ -69,10 +69,94 @@
 
 	<build>
 		<plugins>
+			<!-- Download external resources (CSS/JS/fonts) -->
+			<plugin>
+				<groupId>io.github.download-maven-plugin</groupId>
+				<artifactId>download-maven-plugin</artifactId>
+				<version>2.1.0</version>
+
+				<executions>
+					<execution>
+						<id>tailwind</id>
+						<phase>generate-resources</phase>
+						<goals>
+							<goal>wget</goal>
+						</goals>
+						<configuration>
+							<url>https://cdn.tailwindcss.com?plugins=forms,container-queries</url>
+							<outputDirectory>${project.build.directory}/generated-resources/static/css</outputDirectory>
+							<outputFileName>tailwind.css</outputFileName>
+						</configuration>
+					</execution>
+
+					<execution>
+						<id>htmx</id>
+						<phase>generate-resources</phase>
+						<goals>
+							<goal>wget</goal>
+						</goals>
+						<configuration>
+							<url>https://unpkg.com/htmx.org@1.9.10</url>
+							<outputDirectory>${project.build.directory}/generated-resources/static/js</outputDirectory>
+							<outputFileName>htmx.min.js</outputFileName>
+						</configuration>
+					</execution>
+
+					<execution>
+						<id>alpine</id>
+						<phase>generate-resources</phase>
+						<goals>
+							<goal>wget</goal>
+						</goals>
+						<configuration>
+							<url>https://cdn.jsdelivr.net/gh/alpinejs/alpine@v2.8.0/dist/alpine.min.js</url>
+							<outputDirectory>${project.build.directory}/generated-resources/static/js</outputDirectory>
+							<outputFileName>alpine.min.js</outputFileName>
+						</configuration>
+					</execution>
+
+					<execution>
+						<id>jquery</id>
+						<phase>generate-resources</phase>
+						<goals>
+							<goal>wget</goal>
+						</goals>
+						<configuration>
+							<url>https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js</url>
+							<outputDirectory>${project.build.directory}/generated-resources/static/js</outputDirectory>
+							<outputFileName>jquery.min.js</outputFileName>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+
+			<plugin>
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>build-helper-maven-plugin</artifactId>
+				<version>3.6.1</version>
+				<executions>
+					<execution>
+						<id>add-resource</id>
+						<phase>generate-resources</phase>
+						<goals>
+							<goal>add-resource</goal>
+						</goals>
+						<configuration>
+							<resources>
+								<resource>
+									<directory>${project.build.directory}/generated-resources</directory>
+								</resource>
+							</resources>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
 				<configuration>
+					<layout>ZIP</layout>
 					<excludes>
 						<exclude>
 							<groupId>org.projectlombok</groupId>
