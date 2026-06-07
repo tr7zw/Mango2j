@@ -12,6 +12,18 @@
             <p class="text-on-surface-variant text-sm">Unread chapters matched to your viewing history — sorted from least to most viewed.</p>
         </div>
 
+        <div th:if="${!topTags.empty}" class="mb-8">
+            <p class="text-xs font-bold text-on-surface/60 uppercase tracking-widest mb-3">Top Tags</p>
+            <div class="flex flex-wrap gap-2">
+                <a th:each="tag, tagStat : ${topTags}"
+                   th:href="@{/search(query=${tag.key})}"
+                   class="inline-flex items-center gap-2 px-3 py-1.5 bg-surface-container-low hover:bg-primary/20 rounded-full text-xs font-medium text-on-surface-variant hover:text-primary transition-colors border border-outline-variant/30">
+                    <span th:text="${tag.key}"></span>
+                    <span class="text-on-surface/40 text-xs" th:text="'(' + ${tag.value} + ')' "></span>
+                </a>
+            </div>
+        </div>
+
         <p class="text-on-surface-variant mb-8" th:text="${results.size()} + ' chapters found'"></p>
 
         <!-- Results Grid -->
