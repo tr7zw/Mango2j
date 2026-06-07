@@ -267,6 +267,16 @@ public class LibraryController {
             }
         }
 
+            Map<String, Long> topTags = tagWeights.entrySet().stream()
+                .sorted(Map.Entry.<String, Long>comparingByValue().reversed())
+                .limit(10)
+                .collect(Collectors.toMap(
+                    Map.Entry::getKey,
+                    Map.Entry::getValue,
+                    (a, b) -> a,
+                    LinkedHashMap::new
+                ));
+
         List<DiscoverResult> results = new ArrayList<>();
         if (!tagWeights.isEmpty()) {
             final long finalMaxTagWeight = maxTagWeight;
@@ -297,6 +307,7 @@ public class LibraryController {
                 .collect(Collectors.toList());
         }
 
+            model.addAttribute("topTags", topTags);
         model.addAttribute("results", results);
         return "discover";
     }
