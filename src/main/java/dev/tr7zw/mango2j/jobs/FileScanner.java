@@ -8,8 +8,6 @@ import java.util.concurrent.locks.ReentrantLock;
 
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.scheduling.annotation.Async;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import dev.tr7zw.mango2j.Settings;
@@ -36,23 +34,12 @@ public class FileScanner implements DisposableBean {
     private ChapterRepository chapterRepo;
     @Autowired
     private FileService fileService;
-    @Autowired
-    private ThumbnailGenerator thumbnailGenerator;
-    @Autowired
-    private ChapterAnalyser chapterAnalyser;
-    @Autowired
-    private ImageCounter imageCounter;
-    @Autowired
-    private TitleAnalyser titleAnalyser;
     private final Lock lock = new ReentrantLock();
     @Getter
     private boolean isRunning = false;
     private boolean cancel = false;
 
-    @Async
-    @Scheduled(fixedDelay = 3600000) // Run once per hour
     public void executeLongRunningTask() {
-        boolean triggered = false;
         if (lock.tryLock()) {
             jobLock.getLock().lock();
             try {
@@ -74,7 +61,6 @@ public class FileScanner implements DisposableBean {
                     deleteEmptyTitles();
                     if (cancel)
                         return;
-                    triggered = true;
                     log.info("File Scanner task completed.");
                 } else {
                     log.info("File Scanner task is already in progress.");
@@ -86,12 +72,6 @@ public class FileScanner implements DisposableBean {
             }
         } else {
             log.info("File Scanner task is already locked.");
-        }
-        if (triggered) {
-            thumbnailGenerator.executeLongRunningTask();
-            imageCounter.executeLongRunningTask();
-            chapterAnalyser.executeLongRunningTask();
-            titleAnalyser.executeLongRunningTask();
         }
     }
 

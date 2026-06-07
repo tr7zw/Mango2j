@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" class="dark">
+<head>
+    <th:block th:insert="~{head}"></th:block>
+</head>
+<body class="bg-surface text-on-surface font-body">
+<th:block th:insert="~{layout}"></th:block>
+
+<div class="pt-16 px-6 max-w-7xl mx-auto pb-32">
+    <div class="mb-10">
+        <h1 class="text-4xl md:text-5xl font-black font-headline tracking-tighter text-on-surface uppercase mb-3">Tasks</h1>
+        <p class="text-on-surface-variant text-sm">Submit project-internal task processors and track sync/download progress live.</p>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-10">
+        <div class="lg:col-span-1 p-4 bg-surface-container-low rounded-lg">
+            <h2 class="font-headline font-bold mb-3">Submit Task</h2>
+            <label class="text-xs text-on-surface-variant uppercase tracking-widest">Processor</label>
+            <select id="task-processor-key"
+                    name="key"
+                    class="w-full mt-2 px-3 py-2 rounded bg-surface-container text-on-surface"
+                    hx-get="/tasks/form"
+                    hx-trigger="load, change"
+                    hx-target="#task-form-container"
+                    hx-include="#task-processor-key">
+                <option th:if="${processors.empty}" value="">No available processors</option>
+                <option th:each="p : ${processors}"
+                        th:value="${p.key}"
+                        th:text="${p.displayName}"
+                        th:selected="${p.key == selectedKey}"></option>
+            </select>
+
+            <div id="task-form-container" class="mt-4"></div>
+        </div>
+
+        <div class="lg:col-span-2">
+            <div id="tasks-table-panel"
+                 hx-get="/tasks/table"
+                 hx-trigger="load"
+                 hx-swap="outerHTML">
+            </div>
+        </div>
+    </div>
+</div>
+
+<script th:inline="javascript">
+    setTheme();
+</script>
+</body>
+</html>

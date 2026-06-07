@@ -1,6 +1,7 @@
 package dev.tr7zw.mango2j.util;
 
 import dev.tr7zw.mango2j.jobs.*;
+import dev.tr7zw.mango2j.service.InternalTaskService;
 import org.springframework.beans.factory.annotation.*;
 import org.springframework.stereotype.*;
 
@@ -17,8 +18,14 @@ public class StatusUtil {
     private ImageCounter imageCounter;
     @Autowired
     private TitleAnalyser titleAnalyser;
+    @Autowired
+    private InternalTaskService internalTaskService;
 
     public String getScanStatus() {
+        String taskStatus = internalTaskService.getRunningStatusText();
+        if (!"Idle".equals(taskStatus)) {
+            return taskStatus;
+        }
         if (fileScanner.isRunning()) {
             return "Scanning Files...";
         } else if (thumbnailGenerator.isRunning()) {

@@ -1,0 +1,41 @@
+<div id="download-folder-picker" th:fragment="picker" class="space-y-2">
+    <input type="hidden" name="targetDir" th:value="${currentAbsolute}">
+
+    <div class="text-xs text-on-surface-variant">
+        Base: <span th:text="${basePath}"></span>
+    </div>
+
+    <div class="text-xs text-on-surface-variant break-all">
+        Selected: <span th:text="${currentAbsolute}"></span>
+    </div>
+
+    <div class="flex gap-2">
+        <button type="button"
+                class="px-2 py-1 text-xs bg-surface-container-low text-on-surface rounded border border-outline-variant/30"
+                hx-get="/tasks/form/download/folder-picker"
+                hx-target="#download-folder-picker"
+                hx-swap="outerHTML">
+            Root
+        </button>
+        <button type="button"
+                th:if="${canGoUp}"
+                class="px-2 py-1 text-xs bg-surface-container-low text-on-surface rounded border border-outline-variant/30"
+                th:hx-get="@{/tasks/form/download/folder-picker(current=${parentRelative})}"
+                hx-target="#download-folder-picker"
+                hx-swap="outerHTML">
+            Up
+        </button>
+    </div>
+
+    <div class="max-h-44 overflow-auto rounded border border-outline-variant/30 bg-surface-container-low">
+        <div th:if="${directories.isEmpty()}" class="px-3 py-2 text-xs text-on-surface-variant">No subfolders</div>
+        <button type="button"
+                th:each="dir : ${directories}"
+                class="w-full text-left px-3 py-2 text-sm hover:bg-surface-container border-b last:border-b-0 border-outline-variant/20"
+                th:text="${dir.name}"
+                th:hx-get="@{/tasks/form/download/folder-picker(current=${dir.relativePath})}"
+                hx-target="#download-folder-picker"
+                hx-swap="outerHTML">
+        </button>
+    </div>
+</div>

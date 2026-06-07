@@ -14,7 +14,6 @@ import javax.imageio.stream.MemoryCacheImageOutputStream;
 import lombok.*;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 
 import dev.tr7zw.mango2j.db.Chapter;
@@ -43,15 +42,25 @@ public class ThumbnailGenerator implements DisposableBean {
     @Setter
     private boolean refreshImages = false;
 
-    @Async
     public void executeLongRunningTask() {
+        executeLongRunningTask(null);
+    }
+
+    public int getPlannedCount() {
+        if (refreshImages) {
+            return chapterRepo.findAll().size();
+        }
+        return chapterRepo.findByThumbnailIsNull().size();
+    }
+
+    public void executeLongRunningTask(JobProgressListener listener) {
         if (lock.tryLock()) {
             jobLock.getLock().lock();
             try {
                 if (!isRunning) {
                     isRunning = true;
                     log.info("Thumbnail task started.");
-                    processChapters();
+                    processChapters(listener);
                     log.info("Thumbnail task completed.");
                 } else {
                     log.info("Thumbnail task is already in progress.");
@@ -67,12 +76,17 @@ public class ThumbnailGenerator implements DisposableBean {
         }
     }
 
-    private void processChapters() {
+    private void processChapters(JobProgressListener listener) {
         List<Chapter> chapterList;
         if (refreshImages) {
             chapterList = chapterRepo.findAll();
         } else {
             chapterList = chapterRepo.findByThumbnailIsNull();
+        }
+        int total = chapterList.size();
+        int current = 0;
+        if (listener != null) {
+            listener.onProgress(0, total, "Generating thumbnails");
         }
         for (Chapter chapter : chapterList) {
             if (cancel)
@@ -109,6 +123,11 @@ public class ThumbnailGenerator implements DisposableBean {
                 log.info("Generated thumbnail for " + chapter.getFullPath() + ". Size: " + outBuffer.size() + "bytes");
             } catch (Exception ex) {
                 log.log(Level.WARNING, "Error while processing chapter " + chapter.getFullPath(), ex);
+            } finally {
+                current++;
+                if (listener != null) {
+                    listener.onProgress(current, total, "Generating thumbnails");
+                }
             }
         }
     }

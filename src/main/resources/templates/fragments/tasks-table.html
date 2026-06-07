@@ -1,0 +1,64 @@
+<div id="tasks-table-panel" th:fragment="table" class="space-y-4"
+    hx-get="/tasks/table"
+    th:attr="hx-trigger=${refreshTrigger}"
+    hx-swap="outerHTML">
+    <div class="flex flex-wrap items-center justify-between gap-3 p-3 bg-surface-container-low rounded-lg">
+        <div class="text-xs text-on-surface-variant flex flex-wrap gap-4">
+            <span>Queued: <strong th:text="${queuedCount}"></strong></span>
+            <span>Running: <strong th:text="${runningCount}"></strong></span>
+            <span>Finished: <strong th:text="${finishedCount}"></strong></span>
+            <span>Failed: <strong th:text="${failedCount}"></strong></span>
+            <span>Status: <strong th:text="${scanStatus}"></strong></span>
+        </div>
+        <button class="px-3 py-1.5 bg-secondary text-on-secondary rounded text-xs font-bold"
+                hx-post="/tasks/clear"
+                hx-target="#tasks-table-panel"
+                hx-swap="outerHTML">
+            Clear Finished/Failed
+        </button>
+    </div>
+
+    <div class="overflow-x-auto rounded-lg border border-outline-variant/30" th:if="${!tasks.empty}">
+        <table class="min-w-full text-sm">
+            <thead class="bg-surface-container-low text-on-surface-variant">
+            <tr>
+                <th class="text-left px-3 py-2">Processor</th>
+                <th class="text-left px-3 py-2">Type</th>
+                <th class="text-left px-3 py-2">Status</th>
+                <th class="text-left px-3 py-2">Progress</th>
+                <th class="text-left px-3 py-2">Message</th>
+                <th class="text-left px-3 py-2">Actions</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="t : ${tasks}" class="border-t border-outline-variant/20">
+                <td class="px-3 py-2" th:text="${t.processorKey}"></td>
+                <td class="px-3 py-2" th:text="${t.internalTask ? 'internal' : 'user'}"></td>
+                <td class="px-3 py-2" th:text="${t.status}"></td>
+                <td class="px-3 py-2" th:text="${t.progressCurrent} + '/' + ${t.progressTotal}"></td>
+                <td class="px-3 py-2">
+                    <div th:text="${t.message}"></div>
+                    <div class="text-xs text-red-400" th:if="${t.error != null}" th:text="${t.error}"></div>
+                </td>
+                <td class="px-3 py-2">
+                    <div class="flex gap-2">
+                        <button class="px-2 py-1 text-xs bg-primary text-on-primary rounded"
+                                th:if="${t.status.name() == 'FAILED'}"
+                                th:hx-post="@{/tasks/{id}/retry(id=${t.id})}"
+                                hx-target="#tasks-table-panel"
+                                hx-swap="outerHTML">Retry</button>
+                        <button class="px-2 py-1 text-xs bg-surface-container-low text-on-surface rounded border border-outline-variant/30"
+                                th:hx-post="@{/tasks/{id}/delete(id=${t.id})}"
+                                hx-target="#tasks-table-panel"
+                                hx-swap="outerHTML">Delete</button>
+                    </div>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div th:if="${tasks.empty}" class="text-center py-8 text-on-surface-variant">
+        No tasks yet.
+    </div>
+</div>

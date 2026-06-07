@@ -8,7 +8,6 @@ import java.util.logging.Level;
 
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 
 import dev.tr7zw.mango2j.db.Chapter;
@@ -33,15 +32,22 @@ public class ImageCounter implements DisposableBean {
     private boolean isRunning = false;
     private boolean cancel = false;
 
-    @Async
     public void executeLongRunningTask() {
+        executeLongRunningTask(null);
+    }
+
+    public int getPlannedCount() {
+        return chapterRepo.findAll().size();
+    }
+
+    public void executeLongRunningTask(JobProgressListener listener) {
         if (lock.tryLock()) {
             jobLock.getLock().lock();
             try {
                 if (!isRunning) {
                     isRunning = true;
                     log.info("ImageCounter task started.");
-                    processChapters();
+                    processChapters(listener);
                     log.info("ImageCounter task completed.");
                 } else {
                     log.info("ImageCounter task is already in progress.");
@@ -56,8 +62,14 @@ public class ImageCounter implements DisposableBean {
         }
     }
 
-    private void processChapters() {
-        for (Chapter chapter : chapterRepo.findAll()) {
+    private void processChapters(JobProgressListener listener) {
+        java.util.List<Chapter> chapters = chapterRepo.findAll();
+        int total = chapters.size();
+        int current = 0;
+        if (listener != null) {
+            listener.onProgress(0, total, "Counting images");
+        }
+        for (Chapter chapter : chapters) {
             if (cancel)
                 return;
             try (ChapterWrapper chapterWrapper = fileService.getChapterWrapper(new File(chapter.getFullPath()).toPath())) {
@@ -78,6 +90,11 @@ public class ImageCounter implements DisposableBean {
                 }
             } catch (Exception ex) {
                 log.log(Level.WARNING, "Error while processing chapter " + chapter.getFullPath(), ex);
+            } finally {
+                current++;
+                if (listener != null) {
+                    listener.onProgress(current, total, "Counting images");
+                }
             }
         }
     }
