@@ -255,14 +255,12 @@ public class LibraryController {
 
         // Build weighted tag scores from chapters that have been viewed
         Map<String, Long> tagWeights = new HashMap<>();
-        long maxTagWeight = 1L;
         for (Chapter c : allChapters) {
             if (c.getViews() != null && c.getViews() > 0 && c.getDescription() != null) {
                 Set<String> tags = TagUtil.extractTags(c.getDescription());
                 long views = c.getViews();
                 for (String tag : tags) {
-                    long newWeight = tagWeights.merge(tag, views, Long::sum);
-                    if (newWeight > maxTagWeight) maxTagWeight = newWeight;
+                    tagWeights.merge(tag, views, Long::sum);
                 }
             }
         }
@@ -277,32 +275,36 @@ public class LibraryController {
                     LinkedHashMap::new
                 ));
 
+        Map<String, Double> tagStrength = new HashMap<>();
+        tagWeights.forEach((tag, weight) -> tagStrength.put(tag, Math.log1p(weight)));
+
         List<DiscoverResult> results = new ArrayList<>();
         if (!tagWeights.isEmpty()) {
-            final long finalMaxTagWeight = maxTagWeight;
             results = allChapters.stream()
                 .filter(c -> c.getViews() == null || c.getViews() == 0)
                 .map(c -> {
-                    long score = 0L;
+                    double score = 0.0;
                     if (c.getDescription() != null) {
                         Set<String> tags = TagUtil.extractTags(c.getDescription());
-                        score = tags.stream()
-                            .mapToLong(tag -> tagWeights.getOrDefault(tag, 0L))
-                            .sum();
+                        if (!tags.isEmpty()) {
+                            double avgStrength = tags.stream()
+                                    .mapToDouble(tag -> tagStrength.getOrDefault(tag, 0.0))
+                                    .average()
+                                    .orElse(0.0);
+                            // Use average strength to avoid a few dominant tags overwhelming everything else.
+                            score = avgStrength * Math.log1p(tags.size());
+                        }
                     }
                     return new AbstractMap.SimpleEntry<>(c, score);
                 })
-                .filter(e -> e.getValue() > 0)
+                .filter(e -> e.getValue() > 0.0)
                 .sorted((a, b) -> {
-                    int viewsA = a.getKey().getViews() == null ? 0 : a.getKey().getViews();
-                    int viewsB = b.getKey().getViews() == null ? 0 : b.getKey().getViews();
-                    if (viewsA != viewsB) return Integer.compare(viewsA, viewsB);
-                    return Long.compare(b.getValue(), a.getValue());
+                    return Double.compare(b.getValue(), a.getValue());
                 })
                 .limit(100)
                 .map(e -> {
-                    long pct = Math.round(100.0 * e.getValue() / finalMaxTagWeight);
-                    return new DiscoverResult(e.getKey(), pct);
+                    long score = Math.round(e.getValue() * 100.0);
+                    return new DiscoverResult(e.getKey(), score);
                 })
                 .collect(Collectors.toList());
         }

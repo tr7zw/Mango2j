@@ -10,11 +10,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.util.MultiValueMap;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.*;
 
 @Controller
@@ -131,18 +134,65 @@ public class TaskController {
     }
 
     @PostMapping("/tasks/submit")
-    public String submitTask(@RequestParam MultiValueMap<String, String> params, Model model) {
+    public String submitTask(@RequestParam MultiValueMap<String, String> params,
+                             @RequestParam(name = "uploadFile", required = false) MultipartFile uploadFile,
+                             Model model) {
         String key = params.getFirst("key");
         if (key != null && processorRegistry.find(key).isPresent()) {
             Map<String, Object> payload = new HashMap<>();
             params.forEach((k, v) -> {
                 if (!"key".equals(k) && !v.isEmpty()) {
-                    payload.put(k, v.getFirst());
+                    String value = v.getFirst();
+                    if (value != null && !value.isBlank()) {
+                        payload.put(k, value);
+                    }
                 }
             });
+            if (uploadFile != null && !uploadFile.isEmpty()) {
+                String originalName = sanitizeFileName(uploadFile.getOriginalFilename());
+                String lower = originalName.toLowerCase(Locale.ROOT);
+                if ("upload.zip".equals(key) && !(lower.endsWith(".zip") || lower.endsWith(".cbz"))) {
+                    return tasksTable(model);
+                }
+                if ("upload.pdf-to-zip".equals(key) && !lower.endsWith(".pdf")) {
+                    return tasksTable(model);
+                }
+                Path stagedFile = stageUploadedFile(uploadFile, originalName);
+                payload.put("stagedFile", stagedFile.toString());
+                payload.put("uploadedFileName", originalName);
+            }
             taskService.enqueue(key, payload, false);
         }
         return tasksTable(model);
+    }
+
+    private Path stageUploadedFile(MultipartFile file, String originalName) {
+        try {
+            Path uploadsRoot = settings.getBaseDir().toPath().resolve(".task-uploads").normalize();
+            Files.createDirectories(uploadsRoot);
+            String stagedName = UUID.randomUUID() + "_" + originalName;
+            Path stagedFile = uploadsRoot.resolve(stagedName).normalize();
+            if (!stagedFile.startsWith(uploadsRoot)) {
+                throw new IllegalArgumentException("Invalid upload target path");
+            }
+            try (var in = file.getInputStream()) {
+                Files.copy(in, stagedFile, StandardCopyOption.REPLACE_EXISTING);
+            }
+            return stagedFile;
+        } catch (IOException e) {
+            throw new IllegalStateException("Failed to stage uploaded file", e);
+        }
+    }
+
+    private String sanitizeFileName(String name) {
+        if (name == null || name.isBlank()) {
+            return "upload.bin";
+        }
+        String cleaned = Path.of(name).getFileName().toString().trim();
+        if (cleaned.isBlank()) {
+            return "upload.bin";
+        }
+        return cleaned;
     }
 
     @PostMapping("/tasks/clear")
@@ -160,6 +210,12 @@ public class TaskController {
     @PostMapping("/tasks/{id}/delete")
     public String deleteTask(@PathVariable Long id, Model model) {
         taskService.delete(id);
+        return tasksTable(model);
+    }
+
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    public String handleMaxUploadSizeExceeded(MaxUploadSizeExceededException ex, Model model) {
+        model.addAttribute("taskError", "Upload too large. Maximum file size is 2GB.");
         return tasksTable(model);
     }
 }

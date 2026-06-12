@@ -2,6 +2,7 @@
     hx-get="/tasks/table"
     th:attr="hx-trigger=${refreshTrigger}"
     hx-swap="outerHTML">
+    <div th:if="${taskError != null}" class="p-3 rounded bg-error-container text-on-error-container text-sm font-medium" th:text="${taskError}"></div>
     <div class="flex flex-wrap items-center justify-between gap-3 p-3 bg-surface-container-low rounded-lg">
         <div class="text-xs text-on-surface-variant flex flex-wrap gap-4">
             <span>Queued: <strong th:text="${queuedCount}"></strong></span>

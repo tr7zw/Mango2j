@@ -35,7 +35,7 @@
                         <div th:if="${item.chapter.thumbnail == null}" class="w-full h-full bg-surface-container flex items-center justify-center">
                             <span class="material-symbols-outlined text-on-surface-variant text-4xl">image_not_supported</span>
                         </div>
-                        <!-- Match score badge -->
+                        <!-- Recommendation score badge -->
                         <div class="absolute top-2 right-2 px-2 py-0.5 rounded-full bg-primary/80 text-on-primary text-xs font-bold backdrop-blur-sm" th:text="${item.score}"></div>
                         <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end justify-between p-4">
                             <span class="material-symbols-outlined text-on-surface" style="font-variation-settings: 'FILL' 1;">play_arrow</span>
