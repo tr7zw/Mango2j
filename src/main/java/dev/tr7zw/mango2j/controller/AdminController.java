@@ -31,6 +31,8 @@ public class AdminController {
     private MoveTargetService moveTargetService;
     @Autowired
     private StatusUtil statusUtil;
+    @Autowired
+    private SyncTaskScheduler syncTaskScheduler;
 
     @GetMapping("/admin/status")
     public ResponseEntity<String> getStatus() {
@@ -91,10 +93,7 @@ public class AdminController {
 
     @GetMapping("/admin/scanFiles")
     public ResponseEntity<String> scanFiles() throws IOException {
-        if (fileScanner.isRunning()) {
-            return new ResponseEntity<>("Already running", HttpHeaders.EMPTY, HttpStatus.OK);
-        }
-        fileScanner.executeLongRunningTask();
+        syncTaskScheduler.enqueueSyncPipeline();
         return new ResponseEntity<>("Ok", HttpHeaders.EMPTY, HttpStatus.OK);
     }
 

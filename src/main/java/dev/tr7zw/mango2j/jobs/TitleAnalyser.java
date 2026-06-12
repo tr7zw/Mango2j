@@ -7,7 +7,6 @@ import java.util.concurrent.locks.ReentrantLock;
 import dev.tr7zw.mango2j.db.*;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 
 import lombok.Getter;
@@ -28,15 +27,22 @@ public class TitleAnalyser implements DisposableBean {
     private boolean isRunning = false;
     private boolean cancel = false;
 
-    @Async
     public void executeLongRunningTask() {
+        executeLongRunningTask(null);
+    }
+
+    public int getPlannedCount() {
+        return titleRepo.findAll().size();
+    }
+
+    public void executeLongRunningTask(JobProgressListener listener) {
         if (lock.tryLock()) {
             jobLock.getLock().lock();
             try {
                 if (!isRunning) {
                     isRunning = true;
                     log.info("TitleAnalyser task started.");
-                    analyzeTitles();
+                    analyzeTitles(listener);
                     log.info("TitleAnalyser task completed.");
                 } else {
                     log.info("TitleAnalyser task is already in progress.");
@@ -51,11 +57,21 @@ public class TitleAnalyser implements DisposableBean {
         }
     }
 
-    private void analyzeTitles() {
-        for (Title title : titleRepo.findAll()) {
+    private void analyzeTitles(JobProgressListener listener) {
+        List<Title> titles = titleRepo.findAll();
+        int total = titles.size();
+        int current = 0;
+        if (listener != null) {
+            listener.onProgress(0, total, "Analysing titles");
+        }
+        for (Title title : titles) {
             if (cancel)
                 return;
             analyzeTitleAndChildren(title);
+            current++;
+            if (listener != null) {
+                listener.onProgress(current, total, "Analysing titles");
+            }
         }
     }
 

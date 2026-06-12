@@ -1,0 +1,23 @@
+<div th:fragment="form">
+    <div th:if="${selectedProcessor == null}" class="text-on-surface-variant text-sm mt-2">
+        Select a processor.
+    </div>
+
+    <form th:if="${selectedProcessor != null}" class="space-y-3 mt-3"
+          hx-post="/tasks/submit"
+          hx-target="#tasks-table-panel"
+          hx-swap="outerHTML">
+        <input type="hidden" name="key" th:value="${selectedProcessor.key}">
+
+        <div th:each="field : ${selectedProcessor.formFields}">
+            <label class="block text-xs text-on-surface-variant uppercase tracking-widest mb-1" th:text="${field.label}"></label>
+            <input th:type="${field.type}"
+                   th:name="${field.name}"
+                   th:placeholder="${field.placeholder}"
+                   th:attr="required=${field.required}"
+                   class="w-full px-3 py-2 rounded bg-surface-container text-on-surface">
+        </div>
+
+        <button class="px-3 py-2 bg-primary text-on-primary rounded text-sm font-bold">Queue Task</button>
+    </form>
+</div>

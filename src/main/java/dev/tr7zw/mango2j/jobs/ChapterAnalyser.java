@@ -9,7 +9,6 @@ import dev.tr7zw.mango2j.db.*;
 import dev.tr7zw.mango2j.service.*;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 
 import lombok.Getter;
@@ -32,15 +31,22 @@ public class ChapterAnalyser implements DisposableBean {
     private boolean isRunning = false;
     private boolean cancel = false;
 
-    @Async
     public void executeLongRunningTask() {
+        executeLongRunningTask(null);
+    }
+
+    public int getPlannedCount() {
+        return chapterRepo.findAll().size();
+    }
+
+    public void executeLongRunningTask(JobProgressListener listener) {
         if (lock.tryLock()) {
             jobLock.getLock().lock();
             try {
                 if (!isRunning) {
                     isRunning = true;
                     log.info("ChapterAnalyser task started.");
-                    processChapters();
+                    processChapters(listener);
                     log.info("ChapterAnalyser task completed.");
                 } else {
                     log.info("ChapterAnalyser task is already in progress.");
@@ -55,8 +61,14 @@ public class ChapterAnalyser implements DisposableBean {
         }
     }
 
-    private void processChapters() {
-        for (Chapter chapter : chapterRepo.findAll()) {
+    private void processChapters(JobProgressListener listener) {
+        java.util.List<Chapter> chapters = chapterRepo.findAll();
+        int total = chapters.size();
+        int current = 0;
+        if (listener != null) {
+            listener.onProgress(0, total, "Analysing chapters");
+        }
+        for (Chapter chapter : chapters) {
             if (cancel)
                 return;
             try (ChapterWrapper wrapper = fileService.getChapterWrapper(new File(chapter.getFullPath()).toPath())) {
@@ -97,6 +109,11 @@ public class ChapterAnalyser implements DisposableBean {
             } catch (Exception ex) {
                 log.log(Level.WARNING, "Error while processing chapter " + chapter.getFullPath(), ex);
                 return; // Stop processing on error
+            } finally {
+                current++;
+                if (listener != null) {
+                    listener.onProgress(current, total, "Analysing chapters");
+                }
             }
         }
     }
