@@ -1,8 +1,9 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" class="dark">
 <head>
-    <div th:with="page='Library'"></div>
-    <th:block th:insert="~{head}"></th:block>
+    <th:block th:with="page='Library'">
+        <th:block th:insert="~{head}"></th:block>
+    </th:block>
 </head>
 <body class="bg-surface text-on-surface font-body selection:bg-primary/30 selection:text-primary">
     <th:block th:insert="~{navbar-top}"></th:block>
@@ -60,6 +61,7 @@
                     <span class="material-symbols-outlined text-lg">grade</span>
                     Newest
                 </a>
+            </div>
         </aside>
 
         <!-- Main Content -->
