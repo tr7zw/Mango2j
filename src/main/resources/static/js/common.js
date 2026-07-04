@@ -128,6 +128,58 @@ const setTheme = (theme) => {
   }
 };
 
+// Firefox/Safari fallback for cross-document navigation transitions.
+const hasNativeViewTransitions =
+  typeof document !== 'undefined' &&
+  typeof document.startViewTransition === 'function';
+
+if (!hasNativeViewTransitions) {
+  const root = document.documentElement;
+  root.classList.add('vt-fallback', 'vt-enter');
+
+  window.addEventListener('pageshow', () => {
+    requestAnimationFrame(() => {
+      root.classList.remove('vt-enter', 'vt-leave');
+    });
+  });
+
+  let isLeaving = false;
+  document.addEventListener('click', (event) => {
+    if (event.defaultPrevented || event.button !== 0) return;
+    if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+
+    const anchor = event.target.closest('a[href]');
+    if (!anchor) return;
+    if (anchor.hasAttribute('download')) return;
+    if (anchor.getAttribute('target') && anchor.getAttribute('target') !== '_self') return;
+    if (anchor.hasAttribute('data-no-transition')) return;
+
+    const href = anchor.getAttribute('href');
+    if (!href || href.startsWith('javascript:') || href.startsWith('mailto:') || href.startsWith('tel:')) return;
+
+    const url = new URL(anchor.href, window.location.href);
+    if (url.origin !== window.location.origin) return;
+
+    // Keep same-page hash jumps instant.
+    if (
+      url.pathname === window.location.pathname &&
+      url.search === window.location.search &&
+      url.hash
+    ) {
+      return;
+    }
+
+    event.preventDefault();
+    if (isLeaving) return;
+    isLeaving = true;
+    root.classList.add('vt-leave');
+
+    window.setTimeout(() => {
+      window.location.assign(url.href);
+    }, 180);
+  });
+}
+
 // do it before document is ready to prevent the initial flash of white on
 // 	most pages
 setTheme();
