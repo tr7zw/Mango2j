@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" class="dark">
+<head>
+    <th:block th:insert="~{head}"></th:block>
+</head>
+<body class="bg-surface text-on-surface font-body">
+    <th:block th:insert="~{layout}"></th:block>
+
+    <div class="pt-16 px-6 max-w-7xl mx-auto pb-32">
+        <div class="mb-10">
+            <h1 class="text-4xl md:text-5xl font-black font-headline tracking-tighter text-on-surface uppercase mb-3">DiscoverV</h1>
+            <p class="text-on-surface-variant text-sm">Unread chapters ranked by vector similarity to your weighted reading profile.</p>
+            <p class="text-on-surface-variant text-xs mt-2" th:text="'Profile built from ' + ${profileSourceCount} + ' viewed chapters'"></p>
+        </div>
+
+        <p class="text-on-surface-variant mb-8" th:text="${results.size()} + ' chapters found'"></p>
+
+        <div th:if="${!results.empty}" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-x-6 gap-y-10">
+            <div th:each="item : ${results}" class="group cursor-pointer">
+                <a th:href="'/reader/' + ${item.chapter.id}" class="block">
+                    <div class="relative aspect-[2/3] rounded-lg overflow-hidden bg-surface-container-low mb-3">
+                        <img th:if="${item.chapter.thumbnail != null}" th:src="'/thumbnail/' + ${item.chapter.id}" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110">
+                        <div th:if="${item.chapter.thumbnail == null}" class="w-full h-full bg-surface-container flex items-center justify-center">
+                            <span class="material-symbols-outlined text-on-surface-variant text-4xl">image_not_supported</span>
+                        </div>
+                        <div class="absolute top-2 right-2 px-2 py-0.5 rounded-full bg-primary/80 text-on-primary text-xs font-bold backdrop-blur-sm" th:text="${item.score}"></div>
+                        <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end justify-between p-4">
+                            <span class="material-symbols-outlined text-on-surface" style="font-variation-settings: 'FILL' 1;">play_arrow</span>
+                            <button type="button" class="p-1.5 bg-primary/80 hover:bg-primary rounded text-on-primary transition-all" th:hx-get="@{/chapter/{id}/info(id=${item.chapter.id})}" hx-target="body" hx-swap="beforeend" onclick="event.preventDefault(); event.stopPropagation();">
+                                <span class="material-symbols-outlined text-sm">info</span>
+                            </button>
+                        </div>
+                    </div>
+                    <h3 class="font-headline font-bold text-on-surface group-hover:text-primary transition-colors line-clamp-2" th:text="${item.chapter.name}"></h3>
+                    <div class="flex items-center gap-3 mt-1 text-xs text-on-surface-variant">
+                        <span th:if="${item.chapter.views != null}" class="flex items-center gap-1">
+                            <span class="material-symbols-outlined text-sm">visibility</span>
+                            <span th:text="${item.chapter.views}"></span>
+                        </span>
+                        <span th:if="${item.chapter.pageCount != null}" class="flex items-center gap-1">
+                            <span class="material-symbols-outlined text-sm">auto_stories</span>
+                            <span th:text="${item.chapter.pageCount}"></span>
+                        </span>
+                    </div>
+                </a>
+            </div>
+        </div>
+
+        <div th:if="${results.empty}" class="text-center py-12">
+            <span class="material-symbols-outlined text-on-surface-variant text-6xl mb-4 block">explore</span>
+            <p class="text-on-surface-variant text-lg">No vector recommendations yet. Read a few chapters first.</p>
+        </div>
+    </div>
+
+    <script th:inline="javascript">
+        setTheme();
+    </script>
+</body>
+</html>
