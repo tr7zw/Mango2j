@@ -108,11 +108,13 @@ public class ChapterAnalyser implements DisposableBean {
                     }
                 }
 
-                float[] vector = embeddingModel.embed(chapter.getDescription());
-                byte[] vectorData = EmbeddingSearchUtil.toBytes(vector);
-                if (!Arrays.equals(vectorData, chapter.getDescriptionVector())) {
-                    chapter.setDescriptionVector(vectorData);
-                    updated = true;
+                if (updated || chapter.getDescriptionVector() == null) {
+                    float[] vector = embeddingModel.embed(chapter.getDescription());
+                    byte[] vectorData = EmbeddingSearchUtil.toBytes(vector);
+                    if (!Arrays.equals(vectorData, chapter.getDescriptionVector())) {
+                        chapter.setDescriptionVector(vectorData);
+                        updated = true;
+                    }
                 }
 
                 if (updated) {
