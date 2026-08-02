@@ -3,6 +3,7 @@ package dev.tr7zw.mango2j.controller;
 import dev.tr7zw.mango2j.*;
 import dev.tr7zw.mango2j.db.*;
 import dev.tr7zw.mango2j.util.*;
+import org.springframework.ai.embedding.EmbeddingModel;
 import org.springframework.beans.factory.annotation.*;
 import org.springframework.data.domain.*;
 import org.springframework.stereotype.*;
@@ -26,6 +27,8 @@ public class LibraryController {
     private Settings settings;
     @Autowired
     private StatusUtil statusUtil;
+    @Autowired
+    private EmbeddingModel embeddingModel;
 
     private record TitleStats(
             Title title,
@@ -246,6 +249,7 @@ public class LibraryController {
     }
 
     public record DiscoverResult(Chapter chapter, long score) {}
+    public record DiscoverVectorResult(Chapter chapter, long score) {}
 
     @GetMapping("/discover")
     public String discover(Model model) {
@@ -314,29 +318,136 @@ public class LibraryController {
         return "discover";
     }
 
+    @GetMapping("/discoverv")
+    public String discoverVector(Model model) {
+        model.addAttribute("scanStatus", statusUtil.getScanStatus());
+
+        List<Chapter> allChapters = chapterRepo.findAll();
+        List<Chapter> viewedChapters = allChapters.stream()
+                .filter(c -> c.getViews() != null && c.getViews() > 0)
+                .filter(c -> c.getDescriptionVector() != null)
+                .toList();
+
+        float[] profileVector = buildUserProfileVector(viewedChapters);
+        List<DiscoverVectorResult> results = new ArrayList<>();
+
+        if (profileVector.length > 0) {
+            results = allChapters.stream()
+                    .filter(c -> c.getViews() == null || c.getViews() == 0)
+                    .map(c -> {
+                        float[] chapterVector = EmbeddingSearchUtil.fromBytes(c.getDescriptionVector());
+                        double similarity = EmbeddingSearchUtil.cosineSimilarity(profileVector, chapterVector);
+                        return new AbstractMap.SimpleEntry<>(c, similarity);
+                    })
+                    .filter(e -> e.getValue() > 0.05)
+                    .sorted((a, b) -> Double.compare(b.getValue(), a.getValue()))
+                    .limit(100)
+                    .map(e -> new DiscoverVectorResult(e.getKey(), Math.round(e.getValue() * 100.0)))
+                    .collect(Collectors.toList());
+        }
+
+        model.addAttribute("profileSourceCount", viewedChapters.size());
+        model.addAttribute("results", results);
+        return "discoverv";
+    }
+
+    private float[] buildUserProfileVector(List<Chapter> viewedChapters) {
+        float[] weightedSum = null;
+        double totalWeight = 0.0;
+        Instant now = Instant.now();
+
+        for (Chapter chapter : viewedChapters) {
+            float[] vector = EmbeddingSearchUtil.fromBytes(chapter.getDescriptionVector());
+            if (vector.length == 0) {
+                continue;
+            }
+            if (weightedSum == null) {
+                weightedSum = new float[vector.length];
+            }
+            if (vector.length != weightedSum.length) {
+                continue;
+            }
+
+            float[] normalizedVector = normalizeVector(vector);
+            double weight = Math.log1p(chapter.getViews());
+            if (chapter.getLastView() != null) {
+                long ageDays = Math.max(0L, Duration.between(chapter.getLastView(), now).toDays());
+                weight *= Math.exp(-0.02 * ageDays);
+            }
+            if (weight <= 0.0) {
+                continue;
+            }
+
+            for (int i = 0; i < weightedSum.length; i++) {
+                weightedSum[i] += (float) (normalizedVector[i] * weight);
+            }
+            totalWeight += weight;
+        }
+
+        if (weightedSum == null || totalWeight == 0.0) {
+            return new float[0];
+        }
+
+        for (int i = 0; i < weightedSum.length; i++) {
+            weightedSum[i] /= (float) totalWeight;
+        }
+        return normalizeVector(weightedSum);
+    }
+
+    private float[] normalizeVector(float[] vector) {
+        if (vector == null || vector.length == 0) {
+            return new float[0];
+        }
+        double mag = 0.0;
+        for (float v : vector) {
+            mag += v * v;
+        }
+        if (mag == 0.0) {
+            return new float[vector.length];
+        }
+        float inv = (float) (1.0 / Math.sqrt(mag));
+        float[] normalized = new float[vector.length];
+        for (int i = 0; i < vector.length; i++) {
+            normalized[i] = vector[i] * inv;
+        }
+        return normalized;
+    }
+
     @GetMapping("/search")
     public String search(@RequestParam(name = "query", required = false) String query,
-                        @RequestParam(name = "semantic", defaultValue = "false") boolean useSemantic,
+                        @RequestParam(name = "mode", required = false) String mode,
+                        @RequestParam(name = "semantic", required = false) Boolean useSemantic,
                         Model model) {
         List<Chapter> chapters = new ArrayList<>();
         Map<String, Integer> suggestedTags = new LinkedHashMap<>();
+        String resolvedMode = resolveSearchMode(mode, useSemantic);
 
         if (query != null && !query.isBlank()) {
-            if (useSemantic) {
-                // Semantic search: find similar chapters based on description similarity
+            if ("vector".equals(resolvedMode)) {
+                // Vector search: use precomputed chapter embeddings when available.
+                chapters = EmbeddingSearchUtil.findClosestBySearch(
+                        query,
+                        embeddingModel,
+                        chapterRepo.findAll(),
+                        100,
+                        0.1
+                );
+                model.addAttribute("name", "Vector search for: " + query);
+            } else if ("semantic".equals(resolvedMode)) {
+                // Semantic search: lexical TF-IDF similarity.
                 List<Chapter> allChapters = chapterRepo.findAll();
                 Map<String, Integer> documentFrequency = getDocumentFrequency(allChapters);
                 chapters = allChapters.stream()
-                    .map(c -> new AbstractMap.SimpleEntry<>(c,
-                        SimilarityUtil.cosineSimilarity(
-                            SimilarityUtil.toVector(query, allChapters.size(), documentFrequency),
-                            SimilarityUtil.toVector(c.getDescription(), allChapters.size(), documentFrequency)
-                        )))
-                    .filter(e -> e.getValue() > 0.1)  // Minimum similarity threshold
-                    .sorted((a, b) -> Double.compare(b.getValue(), a.getValue()))
-                    .limit(100)
-                    .map(AbstractMap.SimpleEntry::getKey)
-                    .collect(Collectors.toList());
+                        .map(c -> new AbstractMap.SimpleEntry<>(c,
+                                SimilarityUtil.cosineSimilarity(
+                                        SimilarityUtil.toVector(query, allChapters.size(), documentFrequency),
+                                        SimilarityUtil.toVector(c.getDescription(), allChapters.size(), documentFrequency)
+                                )))
+                        .filter(e -> e.getValue() > 0.1)
+                        .sorted((a, b) -> Double.compare(b.getValue(), a.getValue()))
+                        .limit(100)
+                        .map(AbstractMap.SimpleEntry::getKey)
+                        .collect(Collectors.toList());
                 model.addAttribute("name", "Semantic search for: " + query);
             } else {
                 // Keyword search
@@ -378,11 +489,25 @@ public class LibraryController {
         model.addAttribute("scanStatus", statusUtil.getScanStatus());
         model.addAttribute("chapters", chapters);
         model.addAttribute("query", query);
-        model.addAttribute("semantic", useSemantic);
+        model.addAttribute("mode", resolvedMode);
         model.addAttribute("suggestedTags", suggestedTags);
         model.addAttribute("titles", new ArrayList<>());
         // Return the name of the Thymeleaf template without the extension
         return "search";
+    }
+
+    private String resolveSearchMode(String mode, Boolean useSemantic) {
+        if (mode != null && !mode.isBlank()) {
+            String lower = mode.toLowerCase(Locale.ROOT);
+            if ("keyword".equals(lower) || "semantic".equals(lower) || "vector".equals(lower)) {
+                return lower;
+            }
+        }
+        // Backward compatibility for existing links using ?semantic=true|false
+        if (Boolean.TRUE.equals(useSemantic)) {
+            return "semantic";
+        }
+        return "keyword";
     }
 
     private Map<String, Integer> getDocumentFrequency(List<Chapter> chapters) {

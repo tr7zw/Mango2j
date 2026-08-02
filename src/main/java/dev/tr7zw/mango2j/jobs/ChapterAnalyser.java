@@ -1,12 +1,15 @@
 package dev.tr7zw.mango2j.jobs;
 
 import java.io.*;
+import java.util.*;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Level;
 
 import dev.tr7zw.mango2j.db.*;
 import dev.tr7zw.mango2j.service.*;
+import dev.tr7zw.mango2j.util.EmbeddingSearchUtil;
+import org.springframework.ai.embedding.*;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -20,6 +23,8 @@ public class ChapterAnalyser implements DisposableBean {
 
     @Autowired
     private JobLock jobLock;
+    @Autowired
+    private EmbeddingModel embeddingModel;
     @Autowired
     private ChapterRepository chapterRepo;
     @Autowired
@@ -101,6 +106,13 @@ public class ChapterAnalyser implements DisposableBean {
                         chapter.setDescription(metadata);
                         updated = true;
                     }
+                }
+
+                float[] vector = embeddingModel.embed(chapter.getDescription());
+                byte[] vectorData = EmbeddingSearchUtil.toBytes(vector);
+                if (!Arrays.equals(vectorData, chapter.getDescriptionVector())) {
+                    chapter.setDescriptionVector(vectorData);
+                    updated = true;
                 }
 
                 if (updated) {

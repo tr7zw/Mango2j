@@ -75,29 +75,42 @@ public class ReaderController {
 
         // Find similar chapters
         List<Chapter> allChapters = chapterRepo.findAll();
-        List<Object> similarChapters = SimilarityUtil.findSimilar(
-            chapter,
-            new ArrayList<>(allChapters),
-            c -> ((Chapter) c).getDescription(),
-            c -> ((Chapter) c).getId(),
-            3
+        List<EmbeddingSearchUtil.ChapterScore> similarChapters = EmbeddingSearchUtil.findClosestByVectorWithScores(
+            EmbeddingSearchUtil.fromBytes(chapter.getDescriptionVector()),
+            allChapters,
+            8,
+            0.05,
+            chapter.getId()
         );
 
         String similarChaptersHtml = "";
         if (!similarChapters.isEmpty()) {
             StringBuilder sb = new StringBuilder();
             sb.append("<div class='pt-4 border-t border-surface-container-highest'>");
-            sb.append("<p class='text-xs font-bold text-on-surface/60 uppercase tracking-widest mb-3'>Similar Chapters</p>");
+            sb.append("<p class='text-xs font-bold text-on-surface/60 uppercase tracking-widest mb-3'>Related Chapters (Vector)</p>");
             sb.append("<div class='space-y-2'>");
-            for (Object similar : similarChapters) {
-                Chapter simChapter = (Chapter) similar;
+            for (EmbeddingSearchUtil.ChapterScore score : similarChapters) {
+                Chapter simChapter = score.chapter();
+                int percent = (int) Math.round(score.similarity() * 100);
                 sb.append(String.format(
                     "<a href='/reader/%d' class='block p-2 bg-surface-container-low hover:bg-primary/10 rounded transition-colors'>" +
+                    "<div class='flex items-start gap-2'>" +
+                    "%s" +
+                    "<div class='min-w-0 flex-1'>" +
+                    "<div class='flex items-start justify-between gap-2'>" +
                     "<p class='text-xs font-bold text-on-surface/60 truncate'>%s</p>" +
+                    "<span class='text-[10px] font-bold px-1.5 py-0.5 rounded bg-primary/15 text-primary whitespace-nowrap'>%d%%</span>" +
+                    "</div>" +
                     "<p class='text-xs text-on-surface-variant truncate'>%s</p>" +
+                    "</div>" +
+                    "</div>" +
                     "</a>",
                     simChapter.getId(),
+                    simChapter.getThumbnail() != null
+                            ? String.format("<img src='/thumbnail/%d' class='w-10 h-14 rounded object-cover bg-surface-container-highest shrink-0' loading='lazy'>", simChapter.getId())
+                            : "<div class='w-10 h-14 rounded bg-surface-container-highest shrink-0 flex items-center justify-center'><span class='material-symbols-outlined text-on-surface-variant text-base'>image_not_supported</span></div>",
                     FormatUtil.escapeHtml(simChapter.getName()),
+                    percent,
                     FormatUtil.escapeHtml(simChapter.getPath())
                 ));
             }

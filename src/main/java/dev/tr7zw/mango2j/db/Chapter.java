@@ -8,6 +8,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Lob;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.NonNull;
@@ -60,6 +61,11 @@ public class Chapter {
     @Setter
     @Column(length = 10_000)
     private String description;
+
+    @Getter
+    @Setter
+    @Lob
+    private byte[] descriptionVector;
 
     @Getter
     @Setter
