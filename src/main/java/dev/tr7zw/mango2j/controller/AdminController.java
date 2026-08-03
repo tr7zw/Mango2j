@@ -129,7 +129,6 @@ public class AdminController {
     public ResponseEntity<String> reset() throws IOException {
         for (Chapter chapter : chapterRepo.findAll()) {
             chapter.setDescription(null);
-            chapter.setDescriptionVector(null);
             chapterRepo.save(chapter);
         }
         return new ResponseEntity<>("Ok", HttpHeaders.EMPTY, HttpStatus.OK);

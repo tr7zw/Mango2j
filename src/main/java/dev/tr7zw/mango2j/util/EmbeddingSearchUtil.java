@@ -6,9 +6,10 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
-import org.springframework.ai.embedding.EmbeddingModel;
-
 import dev.tr7zw.mango2j.db.Chapter;
+import dev.tr7zw.mango2j.db.ChapterEmbedding;
+import dev.tr7zw.mango2j.db.ChapterEmbeddingRepository;
+import dev.tr7zw.mango2j.service.EmbeddingModelService;
 
 public class EmbeddingSearchUtil {
 
@@ -59,16 +60,28 @@ public class EmbeddingSearchUtil {
         return dotProduct / (Math.sqrt(mag1) * Math.sqrt(mag2));
     }
 
-    public static List<Chapter> findClosestBySearch(String query, EmbeddingModel embeddingModel, List<Chapter> chapters, int limit) {
-        return findClosestBySearch(query, embeddingModel, chapters, limit, 0.0);
+    public static List<Chapter> findClosestBySearch(String query, EmbeddingModelService embeddingModelService, List<Chapter> chapters, int limit) {
+        return findClosestBySearch(query, embeddingModelService, chapters, limit, 0.0);
     }
 
-    public static List<Chapter> findClosestBySearch(String query, EmbeddingModel embeddingModel, List<Chapter> chapters,
+    public static List<Chapter> findClosestBySearch(String query, EmbeddingModelService embeddingModelService, List<Chapter> chapters,
                                                     int limit, double minSimilarity) {
-        if (query == null || query.isBlank() || embeddingModel == null) {
+        if (query == null || query.isBlank() || embeddingModelService == null) {
             return List.of();
         }
-        return findClosestByVector(embeddingModel.embed(query), chapters, limit, minSimilarity, null);
+        return findClosestByVector(embeddingModelService.embed(query), chapters, limit, minSimilarity, null);
+    }
+
+    public static List<Chapter> findClosestBySearch(String query, EmbeddingModelService embeddingModelService,
+                                                    ChapterEmbeddingRepository chapterEmbeddingRepo, List<Chapter> chapters,
+                                                    int limit, double minSimilarity) {
+        if (query == null || query.isBlank() || embeddingModelService == null || chapterEmbeddingRepo == null) {
+            return List.of();
+        }
+        return findClosestByVectorWithScores(embeddingModelService.embed(query), chapters, limit, minSimilarity, null, chapterEmbeddingRepo)
+                .stream()
+                .map(ChapterScore::chapter)
+                .toList();
     }
 
     public static List<Chapter> findClosestByVector(float[] queryVector, List<Chapter> chapters, int limit) {
@@ -89,6 +102,12 @@ public class EmbeddingSearchUtil {
 
     public static List<ChapterScore> findClosestByVectorWithScores(float[] queryVector, List<Chapter> chapters, int limit,
                                                                    double minSimilarity, Integer excludedChapterId) {
+        return findClosestByVectorWithScores(queryVector, chapters, limit, minSimilarity, excludedChapterId, null);
+    }
+
+    public static List<ChapterScore> findClosestByVectorWithScores(float[] queryVector, List<Chapter> chapters, int limit,
+                                                                   double minSimilarity, Integer excludedChapterId,
+                                                                   ChapterEmbeddingRepository chapterEmbeddingRepo) {
         if (queryVector == null || queryVector.length == 0 || chapters == null || chapters.isEmpty() || limit <= 0) {
             return List.of();
         }
@@ -101,7 +120,13 @@ public class EmbeddingSearchUtil {
             if (excludedChapterId != null && excludedChapterId.equals(chapter.getId())) {
                 continue;
             }
-            float[] candidateVector = fromBytes(chapter.getDescriptionVector());
+            byte[] candidateData = null;
+            if (chapterEmbeddingRepo != null) {
+                candidateData = chapterEmbeddingRepo.findByChapterId(chapter.getId())
+                        .map(ChapterEmbedding::getVectorBytes)
+                        .orElse(null);
+            }
+            float[] candidateVector = fromBytes(candidateData);
             double similarity = cosineSimilarity(queryVector, candidateVector);
             if (similarity >= minSimilarity) {
                 scored.add(new ChapterScore(chapter, similarity));

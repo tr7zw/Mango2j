@@ -2,14 +2,14 @@ package dev.tr7zw.mango2j.controller;
 
 import dev.tr7zw.mango2j.*;
 import dev.tr7zw.mango2j.db.*;
+import dev.tr7zw.mango2j.service.*;
 import dev.tr7zw.mango2j.util.*;
-import org.springframework.ai.embedding.EmbeddingModel;
 import org.springframework.beans.factory.annotation.*;
 import org.springframework.data.domain.*;
+import org.springframework.http.*;
 import org.springframework.stereotype.*;
 import org.springframework.ui.*;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.http.*;
 
 import java.io.*;
 import java.time.*;
@@ -24,11 +24,13 @@ public class LibraryController {
     @Autowired
     private ChapterRepository chapterRepo;
     @Autowired
+    private ChapterEmbeddingRepository chapterEmbeddingRepo;
+    @Autowired
     private Settings settings;
     @Autowired
     private StatusUtil statusUtil;
     @Autowired
-    private EmbeddingModel embeddingModel;
+    private EmbeddingModelService embeddingModelService;
 
     private record TitleStats(
             Title title,
@@ -325,17 +327,18 @@ public class LibraryController {
         List<Chapter> allChapters = chapterRepo.findAll();
         List<Chapter> viewedChapters = allChapters.stream()
                 .filter(c -> c.getViews() != null && c.getViews() > 0)
-                .filter(c -> c.getDescriptionVector() != null)
+                .filter(c -> hasEmbedding(c))
                 .toList();
 
-        float[] profileVector = buildUserProfileVector(viewedChapters);
+        Map<Integer, float[]> embeddingVectors = loadEmbeddingVectors(allChapters);
+        float[] profileVector = buildUserProfileVector(viewedChapters, embeddingVectors);
         List<DiscoverVectorResult> results = new ArrayList<>();
 
         if (profileVector.length > 0) {
             results = allChapters.stream()
                     .filter(c -> c.getViews() == null || c.getViews() == 0)
                     .map(c -> {
-                        float[] chapterVector = EmbeddingSearchUtil.fromBytes(c.getDescriptionVector());
+                        float[] chapterVector = embeddingVectors.getOrDefault(c.getId(), new float[0]);
                         double similarity = EmbeddingSearchUtil.cosineSimilarity(profileVector, chapterVector);
                         return new AbstractMap.SimpleEntry<>(c, similarity);
                     })
@@ -351,13 +354,30 @@ public class LibraryController {
         return "discoverv";
     }
 
-    private float[] buildUserProfileVector(List<Chapter> viewedChapters) {
+    private Map<Integer, float[]> loadEmbeddingVectors(List<Chapter> chapters) {
+        if (chapters == null || chapters.isEmpty()) {
+            return Collections.emptyMap();
+        }
+        List<Integer> chapterIds = chapters.stream().filter(Objects::nonNull).map(Chapter::getId).filter(Objects::nonNull).toList();
+        if (chapterIds.isEmpty()) {
+            return Collections.emptyMap();
+        }
+        return chapterEmbeddingRepo.findByChapterIdIn(chapterIds).stream()
+                .filter(embedding -> embedding != null && embedding.getVectorBytes() != null && embedding.getVectorBytes().length > 0)
+                .collect(Collectors.toMap(
+                        embedding -> embedding.getChapter() != null ? embedding.getChapter().getId() : null,
+                        embedding -> EmbeddingSearchUtil.fromBytes(embedding.getVectorBytes()),
+                        (left, right) -> right,
+                        HashMap::new));
+    }
+
+    private float[] buildUserProfileVector(List<Chapter> viewedChapters, Map<Integer, float[]> embeddingVectors) {
         float[] weightedSum = null;
         double totalWeight = 0.0;
         Instant now = Instant.now();
 
         for (Chapter chapter : viewedChapters) {
-            float[] vector = EmbeddingSearchUtil.fromBytes(chapter.getDescriptionVector());
+            float[] vector = embeddingVectors.getOrDefault(chapter.getId(), new float[0]);
             if (vector.length == 0) {
                 continue;
             }
@@ -394,6 +414,20 @@ public class LibraryController {
         return normalizeVector(weightedSum);
     }
 
+    private boolean hasEmbedding(Chapter chapter) {
+        return chapterEmbeddingRepo.findByChapterId(chapter.getId()).map(ChapterEmbedding::getVectorBytes).filter(bytes -> bytes != null && bytes.length > 0).isPresent();
+    }
+
+    private float[] getEmbeddingVector(Chapter chapter) {
+        if (chapter == null) {
+            return new float[0];
+        }
+        return chapterEmbeddingRepo.findByChapterId(chapter.getId())
+                .map(ChapterEmbedding::getVectorBytes)
+                .map(EmbeddingSearchUtil::fromBytes)
+                .orElseGet(() -> new float[0]);
+    }
+
     private float[] normalizeVector(float[] vector) {
         if (vector == null || vector.length == 0) {
             return new float[0];
@@ -427,12 +461,18 @@ public class LibraryController {
                 // Vector search: use precomputed chapter embeddings when available.
                 chapters = EmbeddingSearchUtil.findClosestBySearch(
                         query,
-                        embeddingModel,
+                        embeddingModelService,
+                        chapterEmbeddingRepo,
                         chapterRepo.findAll(),
                         100,
                         0.1
                 );
-                model.addAttribute("name", "Vector search for: " + query);
+                if (chapters.isEmpty()) {
+                    chapters = chapterRepo.findAll(ChapterRepository.descriptionMatches(query));
+                    model.addAttribute("name", "No vector results; fell back to keyword search for: " + query);
+                } else {
+                    model.addAttribute("name", "Vector search for: " + query);
+                }
             } else if ("semantic".equals(resolvedMode)) {
                 // Semantic search: lexical TF-IDF similarity.
                 List<Chapter> allChapters = chapterRepo.findAll();
