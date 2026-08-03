@@ -6,9 +6,8 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
-import org.springframework.ai.embedding.EmbeddingModel;
-
 import dev.tr7zw.mango2j.db.Chapter;
+import dev.tr7zw.mango2j.service.EmbeddingModelService;
 
 public class EmbeddingSearchUtil {
 
@@ -59,16 +58,16 @@ public class EmbeddingSearchUtil {
         return dotProduct / (Math.sqrt(mag1) * Math.sqrt(mag2));
     }
 
-    public static List<Chapter> findClosestBySearch(String query, EmbeddingModel embeddingModel, List<Chapter> chapters, int limit) {
-        return findClosestBySearch(query, embeddingModel, chapters, limit, 0.0);
+    public static List<Chapter> findClosestBySearch(String query, EmbeddingModelService embeddingModelService, List<Chapter> chapters, int limit) {
+        return findClosestBySearch(query, embeddingModelService, chapters, limit, 0.0);
     }
 
-    public static List<Chapter> findClosestBySearch(String query, EmbeddingModel embeddingModel, List<Chapter> chapters,
+    public static List<Chapter> findClosestBySearch(String query, EmbeddingModelService embeddingModelService, List<Chapter> chapters,
                                                     int limit, double minSimilarity) {
-        if (query == null || query.isBlank() || embeddingModel == null) {
+        if (query == null || query.isBlank() || embeddingModelService == null) {
             return List.of();
         }
-        return findClosestByVector(embeddingModel.embed(query), chapters, limit, minSimilarity, null);
+        return findClosestByVector(embeddingModelService.embed(query), chapters, limit, minSimilarity, null);
     }
 
     public static List<Chapter> findClosestByVector(float[] queryVector, List<Chapter> chapters, int limit) {

@@ -2,14 +2,14 @@ package dev.tr7zw.mango2j.controller;
 
 import dev.tr7zw.mango2j.*;
 import dev.tr7zw.mango2j.db.*;
+import dev.tr7zw.mango2j.service.*;
 import dev.tr7zw.mango2j.util.*;
-import org.springframework.ai.embedding.EmbeddingModel;
 import org.springframework.beans.factory.annotation.*;
 import org.springframework.data.domain.*;
+import org.springframework.http.*;
 import org.springframework.stereotype.*;
 import org.springframework.ui.*;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.http.*;
 
 import java.io.*;
 import java.time.*;
@@ -28,7 +28,7 @@ public class LibraryController {
     @Autowired
     private StatusUtil statusUtil;
     @Autowired
-    private EmbeddingModel embeddingModel;
+    private EmbeddingModelService embeddingModelService;
 
     private record TitleStats(
             Title title,
@@ -427,12 +427,17 @@ public class LibraryController {
                 // Vector search: use precomputed chapter embeddings when available.
                 chapters = EmbeddingSearchUtil.findClosestBySearch(
                         query,
-                        embeddingModel,
+                        embeddingModelService,
                         chapterRepo.findAll(),
                         100,
                         0.1
                 );
-                model.addAttribute("name", "Vector search for: " + query);
+                if (chapters.isEmpty()) {
+                    chapters = chapterRepo.findAll(ChapterRepository.descriptionMatches(query));
+                    model.addAttribute("name", "No vector results; fell back to keyword search for: " + query);
+                } else {
+                    model.addAttribute("name", "Vector search for: " + query);
+                }
             } else if ("semantic".equals(resolvedMode)) {
                 // Semantic search: lexical TF-IDF similarity.
                 List<Chapter> allChapters = chapterRepo.findAll();
