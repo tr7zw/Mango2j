@@ -27,6 +27,8 @@ public class ChapterAnalyser implements DisposableBean {
     @Autowired
     private ChapterRepository chapterRepo;
     @Autowired
+    private ChapterEmbeddingRepository chapterEmbeddingRepo;
+    @Autowired
     private TitleRepository titleRepo;
     @Autowired
     private FileService fileService;
@@ -107,13 +109,16 @@ public class ChapterAnalyser implements DisposableBean {
                     }
                 }
 
-                if (updated || chapter.getDescriptionVector() == null) {
-                    float[] vector = embeddingModelService.embed(chapter.getDescription());
-                    byte[] vectorData = EmbeddingSearchUtil.toBytes(vector);
-                    if (vectorData != null && !Arrays.equals(vectorData, chapter.getDescriptionVector())) {
-                        chapter.setDescriptionVector(vectorData);
-                        updated = true;
-                    }
+                boolean hasEmbedding = chapterEmbeddingRepo.findByChapterId(chapter.getId())
+                        .map(ChapterEmbedding::getVectorBytes)
+                        .filter(bytes -> bytes != null && bytes.length > 0)
+                        .isPresent();
+                if (updated || !hasEmbedding) {
+                    ChapterEmbedding embedding = chapterEmbeddingRepo.findByChapterId(chapter.getId()).orElseGet(ChapterEmbedding::new);
+                    embedding.setChapter(chapter);
+                    byte[] vectorData = EmbeddingSearchUtil.toBytes(embeddingModelService.embed(chapter.getDescription()));
+                    embedding.setVectorBytes(vectorData);
+                    chapterEmbeddingRepo.save(embedding);
                 }
 
                 if (updated) {

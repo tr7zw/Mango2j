@@ -12,6 +12,7 @@ import org.springframework.http.*;
 import java.io.*;
 import java.time.*;
 import java.util.*;
+import java.util.stream.*;
 
 @Controller
 public class ReaderController {
@@ -19,15 +20,18 @@ public class ReaderController {
     private final FileService fileService;
     private final TitleRepository titleRepo;
     private final ChapterRepository chapterRepo;
+    private final ChapterEmbeddingRepository chapterEmbeddingRepo;
     private final MoveTargetService moveTargetService;
     private StatusUtil statusUtil;
 
     @Autowired
     public ReaderController(FileService fileService, TitleRepository titleRepo, ChapterRepository chapterRepo,
-                            MoveTargetService moveTargetService, StatusUtil statusUtil) {
+                            ChapterEmbeddingRepository chapterEmbeddingRepo, MoveTargetService moveTargetService,
+                            StatusUtil statusUtil) {
         this.fileService = fileService;
         this.titleRepo = titleRepo;
         this.chapterRepo = chapterRepo;
+        this.chapterEmbeddingRepo = chapterEmbeddingRepo;
         this.moveTargetService = moveTargetService;
         this.statusUtil = statusUtil;
     }
@@ -67,6 +71,30 @@ public class ReaderController {
         return "reader";
     }
 
+    private Map<Integer, float[]> loadEmbeddingVectors(List<Chapter> chapters) {
+        if (chapters == null || chapters.isEmpty()) {
+            return Collections.emptyMap();
+        }
+        List<Integer> chapterIds = chapters.stream().filter(Objects::nonNull).map(Chapter::getId).filter(Objects::nonNull).toList();
+        if (chapterIds.isEmpty()) {
+            return Collections.emptyMap();
+        }
+        return chapterEmbeddingRepo.findByChapterIdIn(chapterIds).stream()
+                .filter(embedding -> embedding != null && embedding.getVectorBytes() != null && embedding.getVectorBytes().length > 0)
+                .collect(Collectors.toMap(
+                        embedding -> embedding.getChapter() != null ? embedding.getChapter().getId() : null,
+                        embedding -> EmbeddingSearchUtil.fromBytes(embedding.getVectorBytes()),
+                        (left, right) -> right,
+                        HashMap::new));
+    }
+
+    private float[] getEmbeddingVector(Chapter chapter, Map<Integer, float[]> embeddingVectors) {
+        if (chapter == null) {
+            return new float[0];
+        }
+        return embeddingVectors.getOrDefault(chapter.getId(), new float[0]);
+    }
+
     @GetMapping("/chapter/{id}/info")
     @ResponseBody
     public ResponseEntity<String> chapterInfo(@PathVariable Integer id) {
@@ -75,12 +103,14 @@ public class ReaderController {
 
         // Find similar chapters
         List<Chapter> allChapters = chapterRepo.findAll();
+        Map<Integer, float[]> embeddingVectors = loadEmbeddingVectors(allChapters);
         List<EmbeddingSearchUtil.ChapterScore> similarChapters = EmbeddingSearchUtil.findClosestByVectorWithScores(
-            EmbeddingSearchUtil.fromBytes(chapter.getDescriptionVector()),
+            getEmbeddingVector(chapter, embeddingVectors),
             allChapters,
             8,
             0.05,
-            chapter.getId()
+            chapter.getId(),
+            chapterEmbeddingRepo
         );
 
         String similarChaptersHtml = "";

@@ -64,11 +64,6 @@ public class Chapter {
 
     @Getter
     @Setter
-    @Lob
-    private byte[] descriptionVector;
-
-    @Getter
-    @Setter
     private Instant lastModified;
 
     @Getter
