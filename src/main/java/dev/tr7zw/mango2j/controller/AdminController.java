@@ -28,6 +28,8 @@ public class AdminController {
     @Autowired
     private ChapterRepository chapterRepo;
     @Autowired
+    private ChapterEmbeddingRepository chapterEmbeddingRepo;
+    @Autowired
     private MoveTargetService moveTargetService;
     @Autowired
     private StatusUtil statusUtil;
@@ -105,6 +107,7 @@ public class AdminController {
         File f = new File(chapter.getFullPath());
         f.delete();
         log.info("Deleting " + f.getAbsolutePath());
+        chapterEmbeddingRepo.findByChapterId(chapter.getId()).ifPresent(chapterEmbeddingRepo::delete);
         chapterRepo.delete(chapter);
         return "redirect:/library/" + title.getId();
     }
