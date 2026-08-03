@@ -12,6 +12,7 @@ import org.springframework.stereotype.Component;
 
 import dev.tr7zw.mango2j.Settings;
 import dev.tr7zw.mango2j.db.Chapter;
+import dev.tr7zw.mango2j.db.ChapterEmbeddingRepository;
 import dev.tr7zw.mango2j.db.ChapterRepository;
 import dev.tr7zw.mango2j.db.Title;
 import dev.tr7zw.mango2j.db.TitleRepository;
@@ -32,6 +33,8 @@ public class FileScanner implements DisposableBean {
     private TitleRepository titleRepo;
     @Autowired
     private ChapterRepository chapterRepo;
+    @Autowired
+    private ChapterEmbeddingRepository chapterEmbeddingRepo;
     @Autowired
     private FileService fileService;
     private final Lock lock = new ReentrantLock();
@@ -130,6 +133,7 @@ public class FileScanner implements DisposableBean {
                 return;
             File f = new File(dbChapter.getFullPath());
             if (!f.exists() || (dbChapter.getPageCount() != null && dbChapter.getPageCount() == 0)) {
+                chapterEmbeddingRepo.findByChapterId(dbChapter.getId()).ifPresent(chapterEmbeddingRepo::delete);
                 chapterRepo.delete(dbChapter);
                 log.info("Deleted " + f);
             }
