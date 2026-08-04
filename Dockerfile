@@ -8,4 +8,4 @@ WORKDIR /workspace
 
 COPY target/mango2j-*.jar /workspace/mango2j.jar
 
-CMD ["java", "--enable-preview", "--enable-native-access=ALL-UNNAMED", "-Djava.library.path=/usr/lib", "-jar", "mango2j.jar"]
+CMD ["java", "-Xmx4G", "--enable-preview", "--enable-native-access=ALL-UNNAMED", "-Djava.library.path=/usr/lib", "-jar", "mango2j.jar"]
