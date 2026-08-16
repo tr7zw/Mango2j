@@ -97,8 +97,8 @@ public class ChapterAnalyser implements DisposableBean {
                 // Handle description
                 if (wrapper.hasFile("description.txt")) {
                     String dec = metadata + ", " + new String(wrapper.getFile("description.txt").readAllBytes());
-                    if (dec.length() > 1000) {
-                        dec = dec.substring(0, 999);
+                    if (dec.length() > 10000) {
+                        dec = dec.substring(0, 9999);
                     }
                     if (!dec.equals(chapter.getDescription())) {
                         log.info("Updating description for chapter: " + chapter.getFullPath());
