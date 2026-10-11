@@ -9,6 +9,7 @@ import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 
 import lombok.extern.java.*;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.ai.transformers.TransformersEmbeddingModel;
 import org.springframework.stereotype.Service;
 
@@ -20,12 +21,18 @@ public class EmbeddingModelService {
 
     private final Object lock = new Object();
     private final ScheduledExecutorService cleanupExecutor = Executors.newSingleThreadScheduledExecutor();
+    @Value("${mango.embedding.enabled:false}")
+    private boolean embeddingEnabled;
     private volatile TransformersEmbeddingModel activeModel;
     private volatile long lastUsedAt = 0L;
     private volatile boolean initializationFailed = false;
 
     @PostConstruct
     public void init() {
+        if (!embeddingEnabled) {
+            log.info("Embedding model is disabled (mango.embedding.enabled=false).");
+            return;
+        }
         cleanupExecutor.scheduleWithFixedDelay(this::unloadIfIdle, 30, 30, TimeUnit.SECONDS);
     }
 
@@ -61,6 +68,9 @@ public class EmbeddingModelService {
     }
 
     private TransformersEmbeddingModel getOrCreateModel() {
+        if (!embeddingEnabled) {
+            return null;
+        }
         synchronized (lock) {
             if (activeModel != null) {
                 lastUsedAt = System.currentTimeMillis();

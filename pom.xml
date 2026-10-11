@@ -6,7 +6,7 @@
 	<parent>
 		<groupId>org.springframework.boot</groupId>
 		<artifactId>spring-boot-starter-parent</artifactId>
-		<version>4.1.0</version>
+		<version>4.1.1</version>
 		<relativePath /> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>dev.tr7zw</groupId>
@@ -16,7 +16,7 @@
 	<description>Java reimplementation of Mango</description>
 	<properties>
 		<java.version>21</java.version>
-		<spring-ai.version>2.0.0</spring-ai.version>
+		<spring-ai.version>2.0.1</spring-ai.version>
 	</properties>
 	<dependencies>
 		<!-- https://mvnrepository.com/artifact/org.sejda.imageio/webp-imageio -->
@@ -33,14 +33,14 @@
 		<dependency>
 			<groupId>org.projectlombok</groupId>
 			<artifactId>lombok</artifactId>
-			<version>1.18.46</version>
+			<version>1.18.48</version>
 			<optional>true</optional>
 		</dependency>
 		<!-- Source: https://mvnrepository.com/artifact/org.jsoup/jsoup -->
 		<dependency>
 			<groupId>org.jsoup</groupId>
 			<artifactId>jsoup</artifactId>
-			<version>1.23.1</version>
+			<version>1.23.2</version>
 		</dependency>
 		<!-- https://mvnrepository.com/artifact/org.apache.pdfbox/pdfbox -->
 		<dependency>
@@ -166,7 +166,7 @@
 			<plugin>
 				<groupId>org.codehaus.mojo</groupId>
 				<artifactId>build-helper-maven-plugin</artifactId>
-				<version>3.6.1</version>
+				<version>3.6.2</version>
 				<executions>
 					<execution>
 						<id>add-resource</id>
